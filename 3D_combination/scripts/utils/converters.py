@@ -163,7 +163,7 @@ class RootToTxtConverter:
     ) -> bool:
         """Convert 1D scan ROOT files to text format for plotscan.py.
         
-        Output format includes header with parameter name for plotscan.py compatibility
+        Output format: POI nll status (space-separated, aligned columns)
         
         Args:
             input_dir: Directory containing scan ROOT files.
@@ -198,6 +198,10 @@ class RootToTxtConverter:
                 print(f"Warning: Could not extract data from {filename}", file=sys.stderr)
                 continue
             
+            # Default status to 0 if not found
+            if status is None:
+                status = 0
+            
             points.append((poi_val, nll, status))
         
         if not points:
@@ -207,18 +211,14 @@ class RootToTxtConverter:
         # Sort by POI value
         points.sort(key=lambda x: x[0])
         
-        # Calculate delta NLL (relative to minimum) for plotscan.py
-        nll_min = min(p[1] for p in points)
-        
-        # Write output in plotscan.py format with header
+        # Write output with aligned columns matching RooFitUtils format
         os.makedirs(os.path.dirname(output_file) or '.', exist_ok=True)
         with open(output_file, 'w') as f:
-            # Header with parameter name(s)
-            f.write(f"{poi}\tdeltaNLL\n")
-            # Data: POI deltaNLL
+            # Header
+            f.write(f"{poi}   nll   status\n")
+            # Data points with raw NLL values
             for poi_val, nll, status in points:
-                delta_nll = nll - nll_min
-                f.write(f"{poi_val:.6f}\t{delta_nll:.6f}\n")
+                f.write(f"{poi_val:f}  {nll:.12f}  {int(status)}\n")
         
         print(f"Wrote {len(points)} points to {output_file}")
         return True
@@ -233,7 +233,7 @@ class RootToTxtConverter:
     ) -> bool:
         """Convert 2D scan ROOT files to text format for plotscan.py.
         
-        Output format includes header with parameter names for plotscan.py compatibility
+        Output format: POI1 POI2 nll status (space-separated, aligned columns)
         
         Args:
             input_dir: Directory containing scan ROOT files.
@@ -253,7 +253,7 @@ class RootToTxtConverter:
             return False
         
         # Extract data points
-        points = []  # List of (poi1_value, poi2_value, nll)
+        points = []  # List of (poi1_value, poi2_value, nll, status)
         
         for filepath in files:
             filename = os.path.basename(filepath)
@@ -262,14 +262,18 @@ class RootToTxtConverter:
             val1 = self._extract_poi_value_from_filename(filename, poi1)
             val2 = self._extract_poi_value_from_filename(filename, poi2)
             
-            # Get NLL from tree
+            # Get NLL and status from tree
             _, nll, status = self._get_nll_from_tree(filepath)
             
             if val1 is None or val2 is None or nll is None:
                 print(f"Warning: Could not extract data from {filename}", file=sys.stderr)
                 continue
             
-            points.append((val1, val2, nll))
+            # Default status to 0 if not found
+            if status is None:
+                status = 0
+            
+            points.append((val1, val2, nll, status))
         
         if not points:
             print("Error: No valid data points extracted", file=sys.stderr)
@@ -278,11 +282,17 @@ class RootToTxtConverter:
         # Sort by poi1, then poi2
         points.sort(key=lambda x: (x[0], x[1]))
         
-        # Calculate delta NLL (relative to minimum) for plotscan.py
-        nll_min = min(p[2] for p in points)
-        
-        # Write output in plotscan.py format with header
+        # Write output with aligned columns matching RooFitUtils format
         os.makedirs(os.path.dirname(output_file) or '.', exist_ok=True)
+        with open(output_file, 'w') as f:
+            # Header
+            f.write(f"{poi1}   {poi2}   nll   status\n")
+            # Data points with raw NLL values
+            for val1, val2, nll, status in points:
+                f.write(f"{val1:f}  {val2:f}  {nll:.12f}  {int(status)}\n")
+        
+        print(f"Wrote {len(points)} points to {output_file}")
+        return True
         with open(output_file, 'w') as f:
             # Header with parameter names
             f.write(f"{poi1}\t{poi2}\tdeltaNLL\n")
