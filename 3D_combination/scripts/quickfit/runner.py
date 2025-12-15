@@ -361,7 +361,8 @@ class QuickFitRunner:
         mode: str,
         tag: str,
         queue: str,
-        extra_args: Optional[List[str]]
+        extra_args: Optional[List[str]],
+        systematics: str = "full_syst"
     ):
         """Submit 1D scan to Condor."""
         workdir = os.getcwd()
@@ -392,7 +393,7 @@ class QuickFitRunner:
                     f"--previous \"$prev_results\")"
                 )
                 
-                cmd = self._build_command(ws, '"$pois"', output_file, extra_args)
+                cmd = self._build_command(ws, '"$pois"', output_file, extra_args, systematics=systematics)
                 commands.append(cmd.to_string().replace('"$pois"', '"$pois"'))
                 
                 commands.append(f"if [ -f \"{output_file}\" ]; then")
@@ -428,7 +429,7 @@ class QuickFitRunner:
                 output_file = os.path.join(root_dir, f"fit_{poi}_{val_str}.root")
                 
                 poi_string = self.poi_builder.build_1d_scan(poi, val)
-                cmd = self._build_command(ws, poi_string, output_file, extra_args)
+                cmd = self._build_command(ws, poi_string, output_file, extra_args, systematics=systematics)
                 
                 self._write_condor_wrapper(wrapper_path, [cmd.to_string()], workdir)
                 
@@ -561,7 +562,8 @@ class QuickFitRunner:
         mode: str,
         tag: str,
         queue: str,
-        extra_args: Optional[List[str]]
+        extra_args: Optional[List[str]],
+        systematics: str = "full_syst"
     ):
         """Submit 2D scan to Condor."""
         workdir = os.getcwd()
@@ -592,7 +594,7 @@ class QuickFitRunner:
                 output_file = os.path.join(root_dir, f"fit_{poi1}_{v1_str}__{poi2}_{v2_str}.root")
                 
                 poi_string = self.poi_builder.build_2d_scan(poi1, v1, poi2, v2)
-                cmd = self._build_command(ws, poi_string, output_file, extra_args)
+                cmd = self._build_command(ws, poi_string, output_file, extra_args, systematics=systematics)
                 
                 self._write_condor_wrapper(wrapper_path, [cmd.to_string()], workdir)
                 
