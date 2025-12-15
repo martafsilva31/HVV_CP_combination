@@ -215,6 +215,10 @@ class QuickFitRunner:
             f.write("export ATLAS_LOCAL_ROOT_BASE=/cvmfs/atlas.cern.ch/repo/ATLASLocalRootBase\n")
             f.write("source ${ATLAS_LOCAL_ROOT_BASE}/user/atlasLocalSetup.sh 2>/dev/null || true\n")
             
+            # Always source setupATLAS and asetup for Condor jobs
+            f.write("setupATLAS 2>/dev/null || true\n")
+            f.write("asetup StatAnalysis,0.3.1 2>/dev/null || true\n")
+            
             if setup_script:
                 f.write(f"source {setup_script} 2>/dev/null || true\n")
             else:
