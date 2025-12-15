@@ -1,0 +1,19 @@
+<!ELEMENT Asimov (Action*)> <!-- Correlate here is dummy and only included for backward compatibility -->
+<!ATTLIST Asimov
+          InputFile          CDATA            #REQUIRED
+          OutputFile         CDATA            #REQUIRED
+	  POI                CDATA            #IMPLIED
+> 
+
+<!ELEMENT Action EMPTY>
+<!ATTLIST Action
+          Name              CDATA            #REQUIRED
+	  Setup             CDATA            #IMPLIED
+	  Action            CDATA            #IMPLIED
+	  SnapshotAll       CDATA            #IMPLIED
+	  SnapshotGlob      CDATA            #IMPLIED
+	  SnapshotNuis      CDATA            #IMPLIED
+	  SnapshotPOI       CDATA            #IMPLIED
+	  >
+
+

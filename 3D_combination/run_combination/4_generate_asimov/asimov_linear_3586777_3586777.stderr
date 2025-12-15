@@ -1,0 +1,151 @@
+/cvmfs/atlas.cern.ch/repo/ATLASLocalRootBase/user/atlasLocalSetup.sh: line 475: manpath: command not found
+Info in <Minuit2>: MnSeedGenerator Computing seed using NumericalGradient calculator
+Info in <Minuit2>: MnSeedGenerator Initial state: FCN =       969.7696727 Edm =        12912.8613 NCalls =   4519
+Info in <Minuit2>: NegativeG2LineSearch Doing a NegativeG2LineSearch since one of the G2 component is negative
+Info in <Minuit2>: MnSeedGenerator Negative G2 found - new state: 
+  Minimum value : 882.0796174
+  Edm           : 7159.226063
+  Internal parameters:	[                0                0                0                0                0                0                0                0                0                0....                 0]	
+  Internal gradient  :	[      3.815642989                0      40.84077381                0                0                0                0                0                0                0....       1.507230352]	
+  Internal covariance matrix:
+[[   0.0069220951              0              0              0              0              0              0              0              0              0....               0]
+ [              0    0.080001639              0              0              0              0              0              0              0              0....               0]
+ [              0              0    0.001596045              0              0              0              0              0              0              0....               0]
+ [              0              0              0    0.080001639              0              0              0              0              0              0....               0]
+ [              0              0              0              0    0.080001639              0              0              0              0              0....               0]
+ [              0              0              0              0              0    0.080001639              0              0              0              0....               0]
+ [              0              0              0              0              0              0    0.080001639              0              0              0....               0]
+ [              0              0              0              0              0              0              0    0.080001639              0              0....               0]
+ [              0              0              0              0              0              0              0              0    0.080001639              0....               0]
+ [              0              0              0              0              0              0              0              0              0    0.080001639....               0]
+....
+ [              0              0              0              0              0              0              0              0              0              0....     0.085001281]]]
+Info in <Minuit2>: MnSeedGenerator Initial state  
+  Minimum value : 882.0796174
+  Edm           : 7159.226063
+  Internal parameters:	[                0                0                0                0                0                0                0                0                0                0....                 0]	
+  Internal gradient  :	[      3.815642989                0      40.84077381                0                0                0                0                0                0                0....       1.507230352]	
+  Internal covariance matrix:
+[[   0.0069220951              0              0              0              0              0              0              0              0              0....               0]
+ [              0    0.080001639              0              0              0              0              0              0              0              0....               0]
+ [              0              0    0.001596045              0              0              0              0              0              0              0....               0]
+ [              0              0              0    0.080001639              0              0              0              0              0              0....               0]
+ [              0              0              0              0    0.080001639              0              0              0              0              0....               0]
+ [              0              0              0              0              0    0.080001639              0              0              0              0....               0]
+ [              0              0              0              0              0              0    0.080001639              0              0              0....               0]
+ [              0              0              0              0              0              0              0    0.080001639              0              0....               0]
+ [              0              0              0              0              0              0              0              0    0.080001639              0....               0]
+ [              0              0              0              0              0              0              0              0              0    0.080001639....               0]
+....
+ [              0              0              0              0              0              0              0              0              0              0....     0.085001281]]]
+Info in <Minuit2>: VariableMetricBuilder Start iterating until Edm is < 0.001 with call limit = 35595000
+Info in <Minuit2>: VariableMetricBuilder    0 - FCN =       882.0796174 Edm =       7159.226063 NCalls =  33580
+Info in <Minuit2>: VariableMetricBuilder    1 - FCN =       268.6745772 Edm =       2117.264136 NCalls =  37265
+Info in <Minuit2>: VariableMetricBuilder    2 - FCN =      -18.11267582 Edm =       947.9439301 NCalls =  40933
+Info in <Minuit2>: VariableMetricBuilder    3 - FCN =      -137.8263968 Edm =       499.6123812 NCalls =  44591
+Info in <Minuit2>: VariableMetricBuilder    4 - FCN =      -185.5271137 Edm =       250.3663815 NCalls =  48235
+Info in <Minuit2>: VariableMetricBuilder    5 - FCN =      -215.7020675 Edm =       143.7475258 NCalls =  51867
+Info in <Minuit2>: VariableMetricBuilder    6 - FCN =      -237.9478459 Edm =       122.1214686 NCalls =  55495
+Info in <Minuit2>: VariableMetricBuilder    7 - FCN =      -264.9115799 Edm =       71.38106667 NCalls =  59129
+Info in <Minuit2>: VariableMetricBuilder    8 - FCN =      -287.7044213 Edm =       52.68580762 NCalls =  62757
+Info in <Minuit2>: VariableMetricBuilder    9 - FCN =      -297.2337072 Edm =       33.29557405 NCalls =  66379
+Info in <Minuit2>: VariableMetricBuilder   10 - FCN =      -305.9096543 Edm =        25.4072939 NCalls =  70005
+Info in <Minuit2>: VariableMetricBuilder   11 - FCN =      -313.7694141 Edm =       19.34656898 NCalls =  73626
+Info in <Minuit2>: VariableMetricBuilder   12 - FCN =       -318.760584 Edm =       12.55768048 NCalls =  77252
+Info in <Minuit2>: VariableMetricBuilder   13 - FCN =        -322.10457 Edm =       8.417722422 NCalls =  80878
+Info in <Minuit2>: VariableMetricBuilder   14 - FCN =      -325.6802135 Edm =       9.968353256 NCalls =  84502
+Info in <Minuit2>: VariableMetricBuilder   15 - FCN =       -329.770341 Edm =       6.735742381 NCalls =  88126
+Info in <Minuit2>: VariableMetricBuilder   16 - FCN =      -332.1707764 Edm =       5.713652729 NCalls =  91748
+Info in <Minuit2>: VariableMetricBuilder   17 - FCN =      -334.4773212 Edm =       5.070956421 NCalls =  95370
+Info in <Minuit2>: VariableMetricBuilder   18 - FCN =      -336.4146594 Edm =       3.141766087 NCalls =  98992
+Info in <Minuit2>: VariableMetricBuilder   19 - FCN =       -338.219558 Edm =       2.405435378 NCalls = 102618
+Info in <Minuit2>: VariableMetricBuilder   20 - FCN =      -339.2211242 Edm =       2.807131245 NCalls = 106242
+Info in <Minuit2>: VariableMetricBuilder   21 - FCN =      -340.3834965 Edm =       1.784641867 NCalls = 109864
+Info in <Minuit2>: VariableMetricBuilder   22 - FCN =      -341.2187046 Edm =       1.465308759 NCalls = 113486
+Info in <Minuit2>: VariableMetricBuilder   23 - FCN =      -342.1100148 Edm =       1.113451927 NCalls = 117108
+Info in <Minuit2>: VariableMetricBuilder   24 - FCN =      -342.7328364 Edm =       1.214596181 NCalls = 120730
+Info in <Minuit2>: VariableMetricBuilder   25 - FCN =      -343.2975271 Edm =       1.250726633 NCalls = 124352
+Info in <Minuit2>: VariableMetricBuilder   26 - FCN =       -343.757588 Edm =      0.8433730957 NCalls = 127974
+Info in <Minuit2>: VariableMetricBuilder   27 - FCN =      -344.1523559 Edm =      0.5921556227 NCalls = 131596
+Info in <Minuit2>: VariableMetricBuilder   28 - FCN =      -344.6064567 Edm =      0.6484448682 NCalls = 135218
+Info in <Minuit2>: VariableMetricBuilder   29 - FCN =      -345.0245939 Edm =      0.4770511478 NCalls = 138844
+Info in <Minuit2>: VariableMetricBuilder   30 - FCN =      -345.3289116 Edm =      0.3691075124 NCalls = 142472
+Info in <Minuit2>: VariableMetricBuilder   31 - FCN =       -345.598157 Edm =      0.3204981967 NCalls = 146100
+Info in <Minuit2>: VariableMetricBuilder   32 - FCN =      -345.7931544 Edm =      0.2770896427 NCalls = 149732
+Info in <Minuit2>: VariableMetricBuilder   33 - FCN =      -345.9509607 Edm =      0.2241005021 NCalls = 153358
+Info in <Minuit2>: VariableMetricBuilder   34 - FCN =      -346.1376763 Edm =      0.2084384835 NCalls = 156988
+Info in <Minuit2>: VariableMetricBuilder   35 - FCN =      -346.2872922 Edm =      0.1976014759 NCalls = 160618
+Info in <Minuit2>: VariableMetricBuilder   36 - FCN =      -346.4024107 Edm =      0.1614822043 NCalls = 164244
+Info in <Minuit2>: VariableMetricBuilder   37 - FCN =      -346.5295122 Edm =      0.1415370595 NCalls = 167871
+Info in <Minuit2>: VariableMetricBuilder   38 - FCN =      -346.6067387 Edm =      0.1138390322 NCalls = 171497
+Info in <Minuit2>: VariableMetricBuilder   39 - FCN =      -346.7050381 Edm =      0.1089110726 NCalls = 175120
+Info in <Minuit2>: VariableMetricBuilder   40 - FCN =      -346.7899396 Edm =      0.1003756478 NCalls = 178749
+Info in <Minuit2>: VariableMetricBuilder   41 - FCN =      -346.8811614 Edm =      0.1206324207 NCalls = 182376
+Info in <Minuit2>: VariableMetricBuilder   42 - FCN =       -346.965906 Edm =      0.1042056272 NCalls = 186001
+Info in <Minuit2>: VariableMetricBuilder   43 - FCN =      -347.0609699 Edm =      0.1239684006 NCalls = 189624
+Info in <Minuit2>: VariableMetricBuilder   44 - FCN =      -347.1547193 Edm =      0.1070745982 NCalls = 193255
+Info in <Minuit2>: VariableMetricBuilder   45 - FCN =      -347.2655446 Edm =      0.1218821089 NCalls = 196886
+Info in <Minuit2>: VariableMetricBuilder   46 - FCN =      -347.3567628 Edm =      0.1148833724 NCalls = 200509
+Info in <Minuit2>: VariableMetricBuilder   47 - FCN =      -347.4431913 Edm =     0.07989179765 NCalls = 204132
+Info in <Minuit2>: VariableMetricBuilder   48 - FCN =      -347.5145703 Edm =      0.0759628139 NCalls = 207757
+Info in <Minuit2>: VariableMetricBuilder   49 - FCN =      -347.5739589 Edm =     0.05990297695 NCalls = 211382
+Info in <Minuit2>: VariableMetricBuilder   50 - FCN =      -347.6286168 Edm =     0.06539556507 NCalls = 215014
+Info in <Minuit2>: VariableMetricBuilder   51 - FCN =      -347.6718315 Edm =     0.05425591843 NCalls = 218647
+Info in <Minuit2>: VariableMetricBuilder   52 - FCN =      -347.7152136 Edm =     0.04751494202 NCalls = 222276
+Info in <Minuit2>: VariableMetricBuilder   53 - FCN =      -347.7567198 Edm =     0.04661123967 NCalls = 225909
+Info in <Minuit2>: VariableMetricBuilder   54 - FCN =      -347.8110274 Edm =     0.04248333805 NCalls = 229538
+Info in <Minuit2>: VariableMetricBuilder   55 - FCN =      -347.8639949 Edm =     0.04526972433 NCalls = 233171
+Info in <Minuit2>: VariableMetricBuilder   56 - FCN =      -347.8995561 Edm =     0.03044747215 NCalls = 236800
+Info in <Minuit2>: VariableMetricBuilder   57 - FCN =      -347.9290215 Edm =      0.0246183424 NCalls = 240431
+Info in <Minuit2>: VariableMetricBuilder   58 - FCN =      -347.9530202 Edm =      0.0264254192 NCalls = 244062
+Info in <Minuit2>: VariableMetricBuilder   59 - FCN =      -347.9763601 Edm =     0.02389421987 NCalls = 247691
+Info in <Minuit2>: VariableMetricBuilder   60 - FCN =      -348.0043405 Edm =     0.02736159358 NCalls = 251318
+Info in <Minuit2>: VariableMetricBuilder   61 - FCN =      -348.0386611 Edm =     0.02409640718 NCalls = 254949
+Info in <Minuit2>: VariableMetricBuilder   62 - FCN =      -348.0707799 Edm =     0.02407565951 NCalls = 258577
+Info in <Minuit2>: VariableMetricBuilder   63 - FCN =      -348.0984468 Edm =      0.0194929012 NCalls = 262203
+Info in <Minuit2>: VariableMetricBuilder   64 - FCN =      -348.1234455 Edm =     0.01669162648 NCalls = 265829
+Info in <Minuit2>: VariableMetricBuilder   65 - FCN =      -348.1451895 Edm =     0.01477920987 NCalls = 269461
+Info in <Minuit2>: VariableMetricBuilder   66 - FCN =      -348.1618606 Edm =     0.01227230344 NCalls = 273089
+Info in <Minuit2>: VariableMetricBuilder   67 - FCN =      -348.1782851 Edm =      0.0114896096 NCalls = 276717
+Info in <Minuit2>: VariableMetricBuilder   68 - FCN =      -348.1915526 Edm =     0.01180230158 NCalls = 280345
+Info in <Minuit2>: VariableMetricBuilder   69 - FCN =      -348.2055887 Edm =      0.0110045561 NCalls = 283968
+Info in <Minuit2>: VariableMetricBuilder   70 - FCN =      -348.2180612 Edm =    0.009514986371 NCalls = 287592
+Info in <Minuit2>: VariableMetricBuilder   71 - FCN =      -348.2298759 Edm =    0.009260231602 NCalls = 291220
+Info in <Minuit2>: VariableMetricBuilder   72 - FCN =       -348.242754 Edm =    0.009220388938 NCalls = 294850
+Info in <Minuit2>: VariableMetricBuilder   73 - FCN =      -348.2539102 Edm =    0.009494307847 NCalls = 298472
+Info in <Minuit2>: VariableMetricBuilder   74 - FCN =      -348.2646039 Edm =    0.009686868847 NCalls = 302094
+Info in <Minuit2>: VariableMetricBuilder   75 - FCN =      -348.2777558 Edm =    0.008730879654 NCalls = 305716
+Info in <Minuit2>: VariableMetricBuilder   76 - FCN =      -348.2910927 Edm =    0.009212509162 NCalls = 309340
+Info in <Minuit2>: VariableMetricBuilder   77 - FCN =      -348.3016456 Edm =    0.008131384843 NCalls = 312966
+Info in <Minuit2>: VariableMetricBuilder   78 - FCN =      -348.3132823 Edm =    0.007323118333 NCalls = 316591
+Info in <Minuit2>: VariableMetricBuilder   79 - FCN =      -348.3228037 Edm =    0.007036834008 NCalls = 320215
+Info in <Minuit2>: VariableMetricBuilder   80 - FCN =      -348.3304524 Edm =    0.006114608272 NCalls = 323839
+Info in <Minuit2>: VariableMetricBuilder   81 - FCN =      -348.3374897 Edm =    0.004454706394 NCalls = 327461
+Info in <Minuit2>: VariableMetricBuilder   82 - FCN =      -348.3442502 Edm =    0.004608168506 NCalls = 331089
+Info in <Minuit2>: VariableMetricBuilder   83 - FCN =       -348.349614 Edm =    0.004444070533 NCalls = 334715
+Info in <Minuit2>: VariableMetricBuilder   84 - FCN =      -348.3541514 Edm =    0.003669882615 NCalls = 338342
+Info in <Minuit2>: VariableMetricBuilder   85 - FCN =       -348.358638 Edm =     0.00485662583 NCalls = 341969
+Info in <Minuit2>: VariableMetricBuilder   86 - FCN =      -348.3628617 Edm =    0.003269994614 NCalls = 345596
+Info in <Minuit2>: VariableMetricBuilder   87 - FCN =      -348.3667032 Edm =    0.002807506273 NCalls = 349223
+Info in <Minuit2>: VariableMetricBuilder   88 - FCN =       -348.372854 Edm =    0.003732884944 NCalls = 352851
+Info in <Minuit2>: VariableMetricBuilder   89 - FCN =      -348.3773817 Edm =    0.002199792208 NCalls = 356473
+Info in <Minuit2>: VariableMetricBuilder   90 - FCN =       -348.381451 Edm =    0.003042341946 NCalls = 360095
+Info in <Minuit2>: VariableMetricBuilder   91 - FCN =      -348.3853369 Edm =    0.002474950023 NCalls = 363717
+Info in <Minuit2>: VariableMetricBuilder   92 - FCN =      -348.3887289 Edm =    0.002337825076 NCalls = 367339
+Info in <Minuit2>: VariableMetricBuilder   93 - FCN =      -348.3929419 Edm =    0.002376324659 NCalls = 370961
+Info in <Minuit2>: VariableMetricBuilder   94 - FCN =      -348.3968523 Edm =     0.00239528382 NCalls = 374583
+Info in <Minuit2>: VariableMetricBuilder   95 - FCN =      -348.4004275 Edm =    0.002431811647 NCalls = 378205
+Info in <Minuit2>: VariableMetricBuilder   96 - FCN =      -348.4049505 Edm =    0.002534645851 NCalls = 381828
+Info in <Minuit2>: VariableMetricBuilder   97 - FCN =      -348.4082691 Edm =    0.002028316237 NCalls = 385450
+Info in <Minuit2>: VariableMetricBuilder   98 - FCN =      -348.4118432 Edm =    0.002398093504 NCalls = 389073
+Info in <Minuit2>: VariableMetricBuilder   99 - FCN =       -348.415119 Edm =    0.002294894059 NCalls = 392695
+Info in <Minuit2>: VariableMetricBuilder  100 - FCN =       -348.418548 Edm =     0.00186747111 NCalls = 396317
+Info in <Minuit2>: VariableMetricBuilder  101 - FCN =      -348.4213363 Edm =    0.001553359314 NCalls = 399939
+Info in <Minuit2>: VariableMetricBuilder  102 - FCN =      -348.4248289 Edm =    0.002081828498 NCalls = 403561
+Info in <Minuit2>: VariableMetricBuilder  103 - FCN =      -348.4284712 Edm =    0.001836788398 NCalls = 407183
+Info in <Minuit2>: VariableMetricBuilder  104 - FCN =      -348.4316525 Edm =    0.001490976322 NCalls = 410809
+Info in <Minuit2>: VariableMetricBuilder  105 - FCN =      -348.4338493 Edm =    0.001211174999 NCalls = 414433
+Info in <Minuit2>: VariableMetricBuilder  106 - FCN =       -348.435247 Edm =    0.001217350974 NCalls = 418060
+Info in <Minuit2>: VariableMetricBuilder  107 - FCN =      -348.4370534 Edm =    0.001431007476 NCalls = 421690
+Info in <Minuit2>: VariableMetricBuilder  108 - FCN =      -348.4381402 Edm =   0.0009462286324 NCalls = 425318
+Info in <Minuit2>: VariableMetricBuilder  109 - FCN =       -348.439642 Edm =   0.0007548629271 NCalls = 428944

@@ -1,0 +1,373 @@
+# =============================================================================
+# HVV CP 3POI Combination - Analysis Configuration
+# =============================================================================
+# This configuration file defines all analysis-specific settings for the
+# HVV CP combination quickFit scans and fits.
+#
+# Edit this file to customize:
+#   - Input workspaces
+#   - POIs and their ranges
+#   - Nuisance parameters to exclude
+#   - Default quickFit options
+# =============================================================================
+
+name: "HVV_CP_3POI_Combination"
+
+# =============================================================================
+# Main Wilson coefficients to scan (combine-level)
+# =============================================================================
+scan_pois:
+  - cHWtil_combine
+  - cHBtil_combine
+  - cHWBtil_combine
+
+# =============================================================================
+# Scan ranges for each POI
+# These are the default ranges used for scans and fits
+# =============================================================================
+scan_ranges:
+  cHWtil_combine:
+    min: -1.0
+    max: 1.0
+    n_points: 31
+  cHBtil_combine:
+    min: -1.5
+    max: 1.5
+    n_points: 31
+  cHWBtil_combine:
+    min: -3.0
+    max: 3.0
+    n_points: 31
+
+# =============================================================================
+# Input workspaces
+# =============================================================================
+workspaces:
+  linear_obs:
+    path: /project/atlas/users/mfernand/HVV_CP_comb/3D_combination/combined_ws/combined_linear_obs.root
+    workspace_name: combWS
+    data_name: combData
+    description: "Linear EFT, observed data"
+  
+  linear_asimov:
+    path: /project/atlas/users/mfernand/HVV_CP_comb/3D_combination/combined_ws/combine_linear_asimov.root
+    workspace_name: combWS
+    data_name: asimovData
+    description: "Linear EFT, Asimov data (SM expectation)"
+  
+  quad_obs:
+    path: /project/atlas/users/mfernand/HVV_CP_comb/3D_combination/combined_ws/combined_quad_obs.root
+    workspace_name: combWS
+    data_name: combData
+    description: "Quadratic EFT, observed data"
+  
+  quad_asimov:
+    path: /project/atlas/users/mfernand/HVV_CP_comb/3D_combination/combined_ws/combine_quad_asimov.root
+    workspace_name: combWS
+    data_name: asimovData
+    description: "Quadratic EFT, Asimov data (SM expectation)"
+
+# =============================================================================
+# POIs that float during scans (channel-specific and signal strengths)
+# =============================================================================
+float_pois:
+  # -------------------------------------------------------------------------
+  # HZZ channel POIs
+  # -------------------------------------------------------------------------
+  - name: cHWtil_HZZ
+    default: 1.0
+    min: -5.0
+    max: 5.0
+    fixed: false
+  - name: cHBtil_HZZ
+    default: 1.0
+    min: -5.0
+    max: 5.0
+    fixed: false
+  - name: cHWBtil_HZZ
+    default: 1.0
+    min: -5.0
+    max: 5.0
+    fixed: false
+  - name: mu_Signal_HZZ
+    default: 1.0
+    min: -10.0
+    max: 10.0
+    fixed: false
+  - name: mu_qqZZ_HZZ
+    default: 1.0
+    min: -10.0
+    max: 10.0
+    fixed: false
+  - name: CSM_HZZ
+    default: 1.0
+    min: -5.0
+    max: 5.0
+    fixed: true  # Usually fixed
+
+  # -------------------------------------------------------------------------
+  # HWW channel POIs
+  # -------------------------------------------------------------------------
+  - name: cHWtil_HWW
+    default: 1.0
+    min: -5.0
+    max: 5.0
+    fixed: false
+  - name: cHBtil_HWW
+    default: 1.0
+    min: -5.0
+    max: 5.0
+    fixed: false
+  - name: cHWBtil_HWW
+    default: 1.0
+    min: -5.0
+    max: 5.0
+    fixed: false
+  # HWW signal strength mu's (STXS bins)
+  - name: mu_ggF_gg2H_0J_HWW
+    default: 1.0
+    min: -10.0
+    max: 10.0
+    fixed: false
+  - name: mu_ggF_gg2H_1J_ptH_000_060_HWW
+    default: 1.0
+    min: -10.0
+    max: 10.0
+    fixed: false
+  - name: mu_ggF_gg2H_1J_ptH_060_120_HWW
+    default: 1.0
+    min: -10.0
+    max: 10.0
+    fixed: false
+  - name: mu_ggF_gg2H_1J_ptH_120_200_HWW
+    default: 1.0
+    min: -10.0
+    max: 10.0
+    fixed: false
+  - name: mu_ggF_gg2H_01j_ptH_200_300_HWW
+    default: 1.0
+    min: -10.0
+    max: 10.0
+    fixed: false
+  - name: mu_ggF_gg2H_01j_ptH_gt300_HWW
+    default: 1.0
+    min: -10.0
+    max: 10.0
+    fixed: false
+  - name: mu_VBF_qq2Hqq_1J_HWW
+    default: 1.0
+    min: -10.0
+    max: 10.0
+    fixed: false
+  - name: mu_ggF_gg2H_ge2J_dphiJJ_0_0p5Pi_ptH_0_200_HWW
+    default: 1.0
+    min: -10.0
+    max: 10.0
+    fixed: false
+  - name: mu_ggF_gg2H_ge2J_dphiJJ_0p5Pi_Pi_ptH_0_200_HWW
+    default: 1.0
+    min: -10.0
+    max: 10.0
+    fixed: false
+  - name: mu_ggF_gg2H_ge2J_dphiJJ_Pi_1p5Pi_ptH_0_200_HWW
+    default: 1.0
+    min: -10.0
+    max: 10.0
+    fixed: false
+  - name: mu_ggF_gg2H_ge2J_dphiJJ_1p5Pi_2Pi_ptH_0_200_HWW
+    default: 1.0
+    min: -10.0
+    max: 10.0
+    fixed: false
+  - name: mu_ggF_gg2H_dphiJJ_0_0p5Pi_ptH_gt200_HWW
+    default: 1.0
+    min: -10.0
+    max: 10.0
+    fixed: false
+  - name: mu_ggF_gg2H_dphiJJ_0p5Pi_Pi_ptH_gt200_HWW
+    default: 1.0
+    min: -10.0
+    max: 10.0
+    fixed: false
+  - name: mu_ggF_gg2H_dphiJJ_Pi_1p5Pi_ptH_gt200_HWW
+    default: 1.0
+    min: -10.0
+    max: 10.0
+    fixed: false
+  - name: mu_ggF_gg2H_dphiJJ_1p5Pi_2Pi_ptH_gt200_HWW
+    default: 1.0
+    min: -10.0
+    max: 10.0
+    fixed: false
+
+  # -------------------------------------------------------------------------
+  # HTauTau channel POIs
+  # -------------------------------------------------------------------------
+  - name: chwtilde_HTauTau
+    default: 1.0
+    min: -5.0
+    max: 5.0
+    fixed: false
+  - name: chbtilde_HTauTau
+    default: 1.0
+    min: -5.0
+    max: 5.0
+    fixed: false
+  - name: chbwtilde_HTauTau
+    default: 1.0
+    min: -5.0
+    max: 5.0
+    fixed: false
+
+  # -------------------------------------------------------------------------
+  # VHbb channel POIs
+  # -------------------------------------------------------------------------
+  - name: cHWtil_Hbb
+    default: 1.0
+    min: -5.0
+    max: 5.0
+    fixed: false
+  - name: SigXsecOverSMWHx150x250PTV_Hbb
+    default: 1.0
+    min: -10.0
+    max: 10.0
+    fixed: false
+  - name: SigXsecOverSMWHx250x400PTV_Hbb
+    default: 1.0
+    min: -10.0
+    max: 10.0
+    fixed: false
+  - name: SigXsecOverSMWHx75x150PTV_Hbb
+    default: 1.0
+    min: -10.0
+    max: 10.0
+    fixed: false
+  - name: SigXsecOverSMWHxGT400PTV_Hbb
+    default: 1.0
+    min: -10.0
+    max: 10.0
+    fixed: false
+
+# =============================================================================
+# Nuisance parameters to exclude/fix
+# Use patterns compatible with quickFit -n flag
+# =============================================================================
+
+# NPs to always exclude (both stat-only and full systematics)
+exclude_nps:
+  - "*_HZZ_spurious"
+
+# =============================================================================
+# Systematic treatment configurations
+# =============================================================================
+systematics:
+  # Stat-only: Fix all experimental and theory systematics, keep only stat
+  stat_only:
+    description: "Statistical uncertainties only - fix all experimental/theory NPs"
+    fix_nps:
+      - "ATLAS_JES*"
+      - "ATLAS_JET*"
+      - "ATLAS_EG*"
+      - "ATLAS_EL*"
+      - "ATLAS_LUMI*"
+      - "ATLAS_MUON*"
+      - "ATLAS_PRW*"
+      - "ATLAS_FTAG*"
+      - "ATLAS_FT*"
+      - "ATLAS_H4l*"
+      - "ATLAS_JER*"
+      - "ATLAS_MET*"
+      - "ATLAS_a*"
+      - "ATLAS_pdf*"
+      - "ATLAS_shower*"
+      - "ATLAS_th*"
+      - "*_HZZ_spurious"
+      - "gamma*"
+      - "alpha*"
+      - "Gamma*"
+      - "HWW*"
+      - "NF*"
+      - "Parton*"
+      - "auto*"
+      - "theo*"
+  
+  # Full systematics: Only fix known problematic NPs
+  full_syst:
+    description: "Full systematics - only fix known problematic NPs"
+    fix_nps:
+      - "*_HZZ_spurious"
+
+# =============================================================================
+# Default quickFit command options
+# =============================================================================
+quickfit_defaults:
+  min_tolerance: 0.0001
+  minos: 0
+  hesse: 0
+  save_fit_result: 1
+  save_errors: 1
+  fix_star_cache: 1
+
+# =============================================================================
+# Channel definitions for individual channel scans
+# Maps channel suffix to its Wilson coefficient POIs
+# =============================================================================
+channels:
+  HZZ:
+    wilson_coeffs:
+      - cHWtil_HZZ
+      - cHBtil_HZZ
+      - cHWBtil_HZZ
+    other_pois:
+      - mu_Signal_HZZ
+      - mu_qqZZ_HZZ
+      - CSM_HZZ
+  
+  HWW:
+    wilson_coeffs:
+      - cHWtil_HWW
+      - cHBtil_HWW
+      - cHWBtil_HWW
+    other_pois:
+      - mu_ggF_gg2H_0J_HWW
+      - mu_ggF_gg2H_1J_ptH_000_060_HWW
+      - mu_ggF_gg2H_1J_ptH_060_120_HWW
+      - mu_ggF_gg2H_1J_ptH_120_200_HWW
+      - mu_ggF_gg2H_01j_ptH_200_300_HWW
+      - mu_ggF_gg2H_01j_ptH_gt300_HWW
+      - mu_VBF_qq2Hqq_1J_HWW
+      - mu_ggF_gg2H_ge2J_dphiJJ_0_0p5Pi_ptH_0_200_HWW
+      - mu_ggF_gg2H_ge2J_dphiJJ_0p5Pi_Pi_ptH_0_200_HWW
+      - mu_ggF_gg2H_ge2J_dphiJJ_Pi_1p5Pi_ptH_0_200_HWW
+      - mu_ggF_gg2H_ge2J_dphiJJ_1p5Pi_2Pi_ptH_0_200_HWW
+      - mu_ggF_gg2H_dphiJJ_0_0p5Pi_ptH_gt200_HWW
+      - mu_ggF_gg2H_dphiJJ_0p5Pi_Pi_ptH_gt200_HWW
+      - mu_ggF_gg2H_dphiJJ_Pi_1p5Pi_ptH_gt200_HWW
+      - mu_ggF_gg2H_dphiJJ_1p5Pi_2Pi_ptH_gt200_HWW
+  
+  HTauTau:
+    wilson_coeffs:
+      - chwtilde_HTauTau
+      - chbtilde_HTauTau
+      - chbwtilde_HTauTau
+    other_pois: []
+  
+  Hbb:
+    wilson_coeffs:
+      - cHWtil_Hbb
+    other_pois:
+      - SigXsecOverSMWHx150x250PTV_Hbb
+      - SigXsecOverSMWHx250x400PTV_Hbb
+      - SigXsecOverSMWHx75x150PTV_Hbb
+      - SigXsecOverSMWHxGT400PTV_Hbb
+
+# =============================================================================
+# Plot labels (LaTeX format for RooFitUtils)
+# =============================================================================
+plot_labels:
+  cHWtil_combine: '$\tilde{c}_{HW}$'
+  cHBtil_combine: '$\tilde{c}_{HB}$'
+  cHWBtil_combine: '$\tilde{c}_{HWB}$'
+  cHWtil: '$\tilde{c}_{HW}$'
+  cHBtil: '$\tilde{c}_{HB}$'
+  cHWBtil: '$\tilde{c}_{HWB}$'

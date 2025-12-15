@@ -1,0 +1,48 @@
+<!ELEMENT Combination (POIList, Asimov*, Channel+)>
+<!ATTLIST Combination
+        WorkspaceName      CDATA            #IMPLIED
+        ModelConfigName    CDATA            #IMPLIED
+        DataName           CDATA            #IMPLIED
+        OutputFile         CDATA            #IMPLIED      
+        StrictMode         CDATA            #IMPLIED      
+> 
+
+<!ELEMENT Asimov EMPTY>
+<!ATTLIST Asimov
+          Name              CDATA            #REQUIRED
+	  Setup             CDATA            #IMPLIED
+	  Action            CDATA            #IMPLIED
+	  Data              CDATA            #IMPLIED
+	  SnapshotAll       CDATA            #IMPLIED
+	  SnapshotGlob      CDATA            #IMPLIED
+	  SnapshotNuis      CDATA            #IMPLIED
+	  SnapshotPOI       CDATA            #IMPLIED
+	  >
+
+<!ELEMENT Channel (POIList, RenameMap*)>
+<!ATTLIST Channel
+        Name               CDATA            #REQUIRED
+        InputFile          CDATA            #REQUIRED                
+        WorkspaceName      CDATA            #REQUIRED
+        ModelConfigName    CDATA            #REQUIRED
+        DataName           CDATA            #REQUIRED
+        SimplifiedImport   CDATA            #IMPLIED
+> 
+
+<!ELEMENT POIList EMPTY>
+<!ATTLIST POIList
+        Combined               CDATA            #IMPLIED
+        Input                  CDATA            #IMPLIED
+> 
+
+<!ELEMENT RenameMap (Syst*)>
+<!ATTLIST RenameMap
+        InputFile              CDATA           #IMPLIED
+>
+
+<!ELEMENT Syst EMPTY>
+<!ATTLIST Syst
+        OldName               CDATA            #REQUIRED
+        NewName               CDATA            #REQUIRED
+>
+ 
