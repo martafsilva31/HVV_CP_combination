@@ -163,7 +163,7 @@ class RootToTxtConverter:
     ) -> bool:
         """Convert 1D scan ROOT files to text format for plotscan.py.
         
-        Output format: POI deltaNLL (for compatibility with RooFitUtils plotscan.py)
+        Output format includes header with parameter name for plotscan.py compatibility
         
         Args:
             input_dir: Directory containing scan ROOT files.
@@ -210,10 +210,12 @@ class RootToTxtConverter:
         # Calculate delta NLL (relative to minimum) for plotscan.py
         nll_min = min(p[1] for p in points)
         
-        # Write output in plotscan.py format
+        # Write output in plotscan.py format with header
         os.makedirs(os.path.dirname(output_file) or '.', exist_ok=True)
         with open(output_file, 'w') as f:
-            # plotscan.py expects: POI deltaNLL format
+            # Header with parameter name(s)
+            f.write(f"{poi}\tdeltaNLL\n")
+            # Data: POI deltaNLL
             for poi_val, nll, status in points:
                 delta_nll = nll - nll_min
                 f.write(f"{poi_val:.6f}\t{delta_nll:.6f}\n")
@@ -231,7 +233,7 @@ class RootToTxtConverter:
     ) -> bool:
         """Convert 2D scan ROOT files to text format for plotscan.py.
         
-        Output format: POI1 POI2 deltaNLL (for compatibility with RooFitUtils plotscan.py)
+        Output format includes header with parameter names for plotscan.py compatibility
         
         Args:
             input_dir: Directory containing scan ROOT files.
@@ -279,10 +281,12 @@ class RootToTxtConverter:
         # Calculate delta NLL (relative to minimum) for plotscan.py
         nll_min = min(p[2] for p in points)
         
-        # Write output in plotscan.py format
+        # Write output in plotscan.py format with header
         os.makedirs(os.path.dirname(output_file) or '.', exist_ok=True)
         with open(output_file, 'w') as f:
-            # plotscan.py expects: POI1 POI2 deltaNLL format
+            # Header with parameter names
+            f.write(f"{poi1}\t{poi2}\tdeltaNLL\n")
+            # Data: POI1 POI2 deltaNLL
             for val1, val2, nll in points:
                 delta_nll = nll - nll_min
                 f.write(f"{val1:.6f}\t{val2:.6f}\t{delta_nll:.6f}\n")
