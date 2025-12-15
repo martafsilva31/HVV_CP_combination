@@ -94,6 +94,7 @@ class AnalysisConfig:
     Attributes:
         name: Analysis identifier (e.g., "HVV_CP_3POI")
         scan_pois: List of POI names to scan (the main Wilson coefficients)
+        individual_wilson_coeffs: List of individual channel Wilson coefficients
         float_pois: Dict of POIs to float during scans (channel-specific, mu's, etc.)
         fixed_pois: Dict of POIs to keep fixed at specific values
         exclude_nps: Pattern(s) for nuisance parameters to exclude
@@ -104,6 +105,7 @@ class AnalysisConfig:
     """
     name: str
     scan_pois: List[str] = field(default_factory=list)
+    individual_wilson_coeffs: List[str] = field(default_factory=list)
     float_pois: Dict[str, POIConfig] = field(default_factory=dict)
     fixed_pois: Dict[str, float] = field(default_factory=dict)
     exclude_nps: List[str] = field(default_factory=list)
@@ -169,6 +171,7 @@ class AnalysisConfig:
         return cls(
             name=data.get('name', 'analysis'),
             scan_pois=data.get('scan_pois', []),
+            individual_wilson_coeffs=data.get('individual_wilson_coeffs', []),
             float_pois=float_pois,
             fixed_pois=data.get('fixed_pois', {}),
             exclude_nps=data.get('exclude_nps', []),

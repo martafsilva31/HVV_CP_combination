@@ -22,6 +22,23 @@ scan_pois:
   - cHWBtil_combine
 
 # =============================================================================
+# Individual channel Wilson coefficients
+# When scanning combine POIs, these should be FIXED at 1
+# When scanning individual channel POIs, these should FLOAT
+# =============================================================================
+individual_wilson_coeffs:
+  - cHWtil_HZZ
+  - cHBtil_HZZ
+  - cHWBtil_HZZ
+  - cHWtil_HWW
+  - cHBtil_HWW
+  - cHWBtil_HWW
+  - chwtilde_HTauTau
+  - chbtilde_HTauTau
+  - chbwtilde_HTauTau
+  - cHWtil_Hbb
+
+# =============================================================================
 # Scan ranges for each POI
 # These are the default ranges used for scans and fits
 # =============================================================================

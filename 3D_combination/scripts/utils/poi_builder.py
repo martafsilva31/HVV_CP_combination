@@ -37,7 +37,8 @@ class POIBuilder:
     
     Attributes:
         config: Analysis configuration containing POI definitions.
-        scan_pois: List of main POIs to scan (Wilson coefficients).
+        scan_pois: List of main POIs to scan (combine-level Wilson coefficients).
+        individual_wilson_coeffs: List of individual channel Wilson coefficients.
         float_pois: POIs that should float during scans.
         fixed_pois: POIs that should remain fixed.
     """
@@ -49,9 +50,18 @@ class POIBuilder:
             config: AnalysisConfig instance with POI definitions.
         """
         self.config = config
-        self.scan_pois = config.scan_pois
+        self.scan_pois = config.scan_pois  # combine-level: cHWtil_combine, etc.
+        self.individual_wilson_coeffs = getattr(config, 'individual_wilson_coeffs', [])
         self.float_pois = config.float_pois
         self.fixed_pois = config.fixed_pois
+    
+    def _is_combine_poi(self, poi: str) -> bool:
+        """Check if POI is a combine-level Wilson coefficient."""
+        return poi in self.scan_pois
+    
+    def _is_individual_wilson_coeff(self, poi: str) -> bool:
+        """Check if POI is an individual channel Wilson coefficient."""
+        return poi in self.individual_wilson_coeffs
     
     def build_1d_scan(
         self,
@@ -62,9 +72,13 @@ class POIBuilder:
     ) -> str:
         """Build POI string for a 1D scan point.
         
-        The scan POI is fixed at scan_value. Other scan POIs float
-        (unless fix_other_scan_pois=True). Float POIs get their
-        default ranges, optionally seeded from previous_results.
+        Logic:
+        - If scanning a combine POI (cHWtil_combine, etc.):
+          - Fix individual channel Wilson coeffs at 1
+          - Float other combine POIs
+        - If scanning an individual channel POI (cHWtil_HZZ, etc.):
+          - Fix combine POIs at 1
+          - Float other individual channel Wilson coeffs
         
         Args:
             scan_poi: Name of the POI being scanned.
@@ -77,32 +91,48 @@ class POIBuilder:
         """
         pois = []
         prev = previous_results or {}
+        scanning_combine = self._is_combine_poi(scan_poi)
         
-        # Add scan POIs
+        # Handle combine-level POIs
         for poi in self.scan_pois:
             if poi == scan_poi:
                 # The POI being scanned is fixed at scan_value
                 pois.append(f"{poi}={scan_value:.6f}")
-            elif fix_other_scan_pois:
-                # Fix other scan POIs at 0
-                pois.append(f"{poi}=0")
+            elif scanning_combine:
+                # Scanning a combine POI: float other combine POIs
+                if fix_other_scan_pois:
+                    pois.append(f"{poi}=0")
+                else:
+                    default = prev.get(poi, 0.0)
+                    pois.append(f"{poi}={default:.6f}_-3_3")
             else:
-                # Float other scan POIs
-                default = prev.get(poi, 0.0)
-                pois.append(f"{poi}={default:.6f}_-3_3")
+                # Scanning an individual channel POI: fix combine POIs at 1
+                pois.append(f"{poi}=1")
         
-        # Add scan POI if it's not in scan_pois (e.g., channel-specific scan)
-        if scan_poi not in self.scan_pois:
-            pois.append(f"{scan_poi}={scan_value:.6f}")
+        # Handle individual channel Wilson coefficients
+        for poi in self.individual_wilson_coeffs:
+            if poi == scan_poi:
+                # This is the POI being scanned (already handled if it's in scan_pois)
+                if scan_poi not in self.scan_pois:
+                    pois.append(f"{poi}={scan_value:.6f}")
+            elif scanning_combine:
+                # Scanning a combine POI: fix individual coeffs at 1
+                pois.append(f"{poi}=1")
+            else:
+                # Scanning an individual POI: float other individual coeffs
+                default = prev.get(poi, 1.0)
+                pois.append(f"{poi}={default:.6f}_-5_5")
         
-        # Add float POIs (channel-specific mu's, etc.)
+        # Add other float POIs (mu's, signal strengths, etc.) - not Wilson coeffs
         for name, poi_config in self.float_pois.items():
-            if name in self.scan_pois:
+            if name in self.scan_pois or name in self.individual_wilson_coeffs:
+                continue  # Already handled above
+            if name == scan_poi:
                 continue  # Already handled
             default = prev.get(name, poi_config.default)
             pois.append(poi_config.to_quickfit_str(default))
         
-        # Add fixed POIs
+        # Add explicitly fixed POIs
         for name, value in self.fixed_pois.items():
             pois.append(f"{name}={value}")
         
@@ -122,6 +152,10 @@ class POIBuilder:
         Two scan POIs are fixed at their respective values.
         The third scan POI floats (unless fix_other_scan_pois=True).
         
+        Same logic as 1D scan:
+        - If scanning combine POIs: fix individual channel coeffs at 1
+        - If scanning individual POIs: fix combine POIs at 1
+        
         Args:
             scan_poi1: First POI being scanned.
             scan_value1: Value for first scan POI.
@@ -136,27 +170,50 @@ class POIBuilder:
         pois = []
         prev = previous_results or {}
         scan_set = {scan_poi1, scan_poi2}
+        scanning_combine = self._is_combine_poi(scan_poi1) or self._is_combine_poi(scan_poi2)
         
-        # Add scan POIs
+        # Handle combine-level POIs
         for poi in self.scan_pois:
             if poi == scan_poi1:
                 pois.append(f"{poi}={scan_value1:.6f}")
             elif poi == scan_poi2:
                 pois.append(f"{poi}={scan_value2:.6f}")
-            elif fix_other_scan_pois:
-                pois.append(f"{poi}=0")
+            elif scanning_combine:
+                # Scanning combine POIs: float other combine POIs
+                if fix_other_scan_pois:
+                    pois.append(f"{poi}=0")
+                else:
+                    default = prev.get(poi, 0.0)
+                    pois.append(f"{poi}={default:.6f}_-3_3")
             else:
-                default = prev.get(poi, 0.0)
-                pois.append(f"{poi}={default:.6f}_-3_3")
+                # Scanning individual POIs: fix combine POIs at 1
+                pois.append(f"{poi}=1")
         
-        # Add float POIs
+        # Handle individual channel Wilson coefficients
+        for poi in self.individual_wilson_coeffs:
+            if poi in scan_set:
+                if poi == scan_poi1:
+                    pois.append(f"{poi}={scan_value1:.6f}")
+                elif poi == scan_poi2:
+                    pois.append(f"{poi}={scan_value2:.6f}")
+            elif scanning_combine:
+                # Scanning combine POIs: fix individual coeffs at 1
+                pois.append(f"{poi}=1")
+            else:
+                # Scanning individual POIs: float other individual coeffs
+                default = prev.get(poi, 1.0)
+                pois.append(f"{poi}={default:.6f}_-5_5")
+        
+        # Add other float POIs (mu's, signal strengths, etc.)
         for name, poi_config in self.float_pois.items():
-            if name in self.scan_pois:
+            if name in self.scan_pois or name in self.individual_wilson_coeffs:
+                continue
+            if name in scan_set:
                 continue
             default = prev.get(name, poi_config.default)
             pois.append(poi_config.to_quickfit_str(default))
         
-        # Add fixed POIs
+        # Add explicitly fixed POIs
         for name, value in self.fixed_pois.items():
             pois.append(f"{name}={value}")
         
