@@ -104,12 +104,12 @@ mkdir -p "$OUTPUT_DIR"
 
 # Generate default labels
 declare -A POI_LABELS
-POI_LABELS["cHWtil_combine"]='$\tilde{c}_{HW}$'
-POI_LABELS["cHBtil_combine"]='$\tilde{c}_{HB}$'
-POI_LABELS["cHWBtil_combine"]='$\tilde{c}_{HWB}$'
-POI_LABELS["cHWtil"]='$\tilde{c}_{HW}$'
-POI_LABELS["cHBtil"]='$\tilde{c}_{HB}$'
-POI_LABELS["cHWBtil"]='$\tilde{c}_{HWB}$'
+POI_LABELS["cHWtil_combine"]='$c_{H\tilde{W}}$'
+POI_LABELS["cHBtil_combine"]='$c_{H\tilde{B}}$'
+POI_LABELS["cHWBtil_combine"]='$c_{H\tilde{W}B}$'
+POI_LABELS["cHWtil"]='$c_{H\tilde{W}}$'
+POI_LABELS["cHBtil"]='$c_{H\tilde{B}}$'
+POI_LABELS["cHWBtil"]='$c_{H\tilde{W}B}$'
 
 if [[ -z "$LABEL" ]]; then
     LABEL="${POI_LABELS[$POI]:-$POI}"
