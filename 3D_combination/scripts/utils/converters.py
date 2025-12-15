@@ -302,8 +302,6 @@ def main():
                        help='Glob pattern for ROOT files')
     parser.add_argument('--tree', default='nllscan', 
                        help='TTree name containing scan results')
-    parser.add_argument('--ref-nll', type=float, 
-                       help='Reference NLL value (uses minimum if not provided)')
     
     args = parser.parse_args()
     
@@ -316,12 +314,12 @@ def main():
     if args.poi2:
         success = converter.convert_2d_scan(
             args.indir, args.out, args.poi, args.poi2,
-            pattern=args.pattern, reference_nll=args.ref_nll
+            pattern=args.pattern
         )
     else:
         success = converter.convert_1d_scan(
             args.indir, args.out, args.poi,
-            pattern=args.pattern, reference_nll=args.ref_nll
+            pattern=args.pattern
         )
     
     sys.exit(0 if success else 1)
