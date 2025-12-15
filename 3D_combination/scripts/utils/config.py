@@ -100,6 +100,7 @@ class AnalysisConfig:
         workspaces: Dict of workspace configurations by label
         scan_ranges: Default scan ranges per POI
         quickfit_defaults: Default quickFit command options
+        systematics: Dict of systematics configurations (stat_only, full_syst)
     """
     name: str
     scan_pois: List[str] = field(default_factory=list)
@@ -109,6 +110,7 @@ class AnalysisConfig:
     workspaces: Dict[str, WorkspaceConfig] = field(default_factory=dict)
     scan_ranges: Dict[str, Dict[str, float]] = field(default_factory=dict)
     quickfit_defaults: Dict[str, Any] = field(default_factory=dict)
+    systematics: Dict[str, Dict[str, Any]] = field(default_factory=dict)
     
     def __post_init__(self):
         """Set sensible defaults for quickfit options."""
@@ -172,7 +174,8 @@ class AnalysisConfig:
             exclude_nps=data.get('exclude_nps', []),
             workspaces=workspaces,
             scan_ranges=data.get('scan_ranges', {}),
-            quickfit_defaults=data.get('quickfit_defaults', {})
+            quickfit_defaults=data.get('quickfit_defaults', {}),
+            systematics=data.get('systematics', {})
         )
     
     def to_yaml(self, filepath: str) -> None:
@@ -231,12 +234,26 @@ class AnalysisConfig:
         # Default range
         return ScanConfig(poi=poi, min_val=-3.0, max_val=3.0, n_points=25)
     
-    def get_exclude_nps_pattern(self) -> str:
+    def get_exclude_nps_pattern(self, systematics: str = "full_syst") -> str:
         """Get combined exclude NP pattern for quickFit -n flag.
+        
+        Args:
+            systematics: Which systematics configuration to use.
+                - "full_syst": Use full_syst.fix_nps from config (default)
+                - "stat_only": Use stat_only.fix_nps from config
+                - Otherwise: Use self.exclude_nps
         
         Returns:
             Comma-separated pattern string or empty string if none.
         """
-        if not self.exclude_nps:
+        # First, always include base exclude_nps
+        patterns = list(self.exclude_nps) if self.exclude_nps else []
+        
+        # Then add systematics-specific patterns if config has them
+        if hasattr(self, 'systematics') and self.systematics:
+            if systematics in self.systematics and 'fix_nps' in self.systematics[systematics]:
+                patterns.extend(self.systematics[systematics]['fix_nps'])
+        
+        if not patterns:
             return ""
-        return ",".join(self.exclude_nps)
+        return ",".join(patterns)

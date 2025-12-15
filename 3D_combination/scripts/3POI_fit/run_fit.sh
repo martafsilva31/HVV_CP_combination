@@ -15,6 +15,7 @@ CONFIG="${SCRIPT_DIR}/../configs/hvv_cp_combination.yaml"
 
 WORKSPACE=""
 BACKEND="local"
+SYSTEMATICS="full_syst"
 OUTPUT_DIR="${SCRIPT_DIR}/../../output/3POI_fits"
 TAG=""
 QUEUE="medium"
@@ -31,6 +32,7 @@ Required:
 
 Optional:
   --backend <backend>   local|condor (default: local)
+  --systematics <sys>   full_syst|stat_only (default: full_syst)
   --output-dir <dir>    Output directory
   --tag <tag>           Tag for output naming
   --queue <queue>       Condor queue (default: medium)
@@ -53,6 +55,7 @@ while [[ $# -gt 0 ]]; do
     case "$1" in
         --workspace) WORKSPACE="$2"; shift 2;;
         --backend) BACKEND="$2"; shift 2;;
+        --systematics) SYSTEMATICS="$2"; shift 2;;
         --output-dir) OUTPUT_DIR="$2"; shift 2;;
         --tag) TAG="$2"; shift 2;;
         --queue) QUEUE="$2"; shift 2;;
@@ -78,11 +81,12 @@ fi
 echo "=============================================="
 echo "3POI Maximum Likelihood Fit"
 echo "=============================================="
-echo "  Workspace: $WORKSPACE"
-echo "  Backend:   $BACKEND"
-echo "  Hesse:     $HESSE"
-echo "  Output:    $OUTPUT_DIR"
-echo "  Tag:       $TAG"
+echo "  Workspace:  $WORKSPACE"
+echo "  Backend:    $BACKEND"
+echo "  Systematics: $SYSTEMATICS"
+echo "  Hesse:      $HESSE"
+echo "  Output:     $OUTPUT_DIR"
+echo "  Tag:        $TAG"
 echo "=============================================="
 echo
 
@@ -98,6 +102,7 @@ python3 -m quickfit.runner \
     --scan-type fit \
     --workspace "$WORKSPACE" \
     --backend "$BACKEND" \
+    --systematics "$SYSTEMATICS" \
     --output-dir "$OUTPUT_DIR" \
     --tag "$TAG" \
     --queue "$QUEUE" \

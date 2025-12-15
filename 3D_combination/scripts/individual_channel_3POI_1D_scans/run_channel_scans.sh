@@ -25,6 +25,7 @@ MAX=5
 NPOINTS=31
 MODE="parallel"
 BACKEND="local"
+SYSTEMATICS="full_syst"
 OUTPUT_DIR="${SCRIPT_DIR}/../../output/individual_channel_scans"
 TAG=""
 QUEUE="medium"
@@ -46,6 +47,7 @@ Optional:
   --n <N>              Number of scan points (default: 31)
   --mode <mode>        parallel|sequential (default: parallel)
   --backend <backend>  local|condor (default: local)
+  --systematics <sys>  full_syst|stat_only (default: full_syst)
   --output-dir <dir>   Output directory
   --tag <tag>          Tag for output naming
   --queue <queue>      Condor queue (default: medium)
@@ -81,6 +83,7 @@ while [[ $# -gt 0 ]]; do
         --n) NPOINTS="$2"; shift 2;;
         --mode) MODE="$2"; shift 2;;
         --backend) BACKEND="$2"; shift 2;;
+        --systematics) SYSTEMATICS="$2"; shift 2;;
         --output-dir) OUTPUT_DIR="$2"; shift 2;;
         --tag) TAG="$2"; shift 2;;
         --queue) QUEUE="$2"; shift 2;;
@@ -104,14 +107,15 @@ fi
 echo "=============================================="
 echo "Individual Channel 1D Scan"
 echo "=============================================="
-echo "  Workspace: $WORKSPACE"
-echo "  Channel:   $CHANNEL"
-echo "  POI:       $POI"
-echo "  Range:     [$MIN, $MAX] with $NPOINTS points"
-echo "  Mode:      $MODE"
-echo "  Backend:   $BACKEND"
-echo "  Output:    $OUTPUT_DIR"
-echo "  Tag:       $TAG"
+echo "  Workspace:  $WORKSPACE"
+echo "  Channel:    $CHANNEL"
+echo "  POI:        $POI"
+echo "  Range:      [$MIN, $MAX] with $NPOINTS points"
+echo "  Mode:       $MODE"
+echo "  Backend:    $BACKEND"
+echo "  Systematics: $SYSTEMATICS"
+echo "  Output:     $OUTPUT_DIR"
+echo "  Tag:        $TAG"
 echo "=============================================="
 echo "  Note: Combine-level coefficients fixed at 1"
 echo "=============================================="
@@ -148,6 +152,7 @@ runner.run_1d_scan(
     n_points=int('$NPOINTS'),
     mode='$MODE',
     backend='$BACKEND',
+    systematics='$SYSTEMATICS',
     output_dir='$OUTPUT_DIR',
     tag='$TAG',
     queue='$QUEUE'

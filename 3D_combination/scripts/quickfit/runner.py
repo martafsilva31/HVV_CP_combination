@@ -148,9 +148,19 @@ class QuickFitRunner:
         poi_string: str,
         output_file: str,
         extra_args: Optional[List[str]] = None,
-        hesse: int = 0
+        hesse: int = 0,
+        systematics: str = "full_syst"
     ) -> QuickFitCommand:
-        """Build a quickFit command."""
+        """Build a quickFit command.
+        
+        Args:
+            ws: Workspace configuration.
+            poi_string: POI string for quickFit.
+            output_file: Output file path.
+            extra_args: Additional arguments.
+            hesse: Whether to compute Hesse errors.
+            systematics: Systematics mode ("full_syst" or "stat_only").
+        """
         defaults = self.config.quickfit_defaults
         return QuickFitCommand(
             input_file=ws.path,
@@ -158,7 +168,7 @@ class QuickFitRunner:
             data=ws.data_name,
             poi_string=poi_string,
             output_file=output_file,
-            exclude_nps=self.config.get_exclude_nps_pattern(),
+            exclude_nps=self.config.get_exclude_nps_pattern(systematics=systematics),
             extra_args=extra_args or [],
             min_tolerance=defaults.get('min_tolerance', 0.0001),
             minos=defaults.get('minos', 0),
@@ -257,7 +267,8 @@ class QuickFitRunner:
         output_dir: str = ".",
         tag: Optional[str] = None,
         queue: str = "medium",
-        extra_args: Optional[List[str]] = None
+        extra_args: Optional[List[str]] = None,
+        systematics: str = "full_syst"
     ) -> str:
         """Run a 1D likelihood scan.
         
@@ -273,6 +284,7 @@ class QuickFitRunner:
             tag: Optional tag for output naming.
             queue: Condor queue (if backend=condor).
             extra_args: Extra quickFit arguments.
+            systematics: Systematics mode ("full_syst" or "stat_only").
         
         Returns:
             Path to output directory with ROOT files.
@@ -292,9 +304,9 @@ class QuickFitRunner:
         self._log(f"Output: {root_dir}")
         
         if backend == "local":
-            self._run_1d_scan_local(ws, poi, values, root_dir, logs_dir, mode, extra_args)
+            self._run_1d_scan_local(ws, poi, values, root_dir, logs_dir, mode, extra_args, systematics)
         elif backend == "condor":
-            self._run_1d_scan_condor(ws, poi, values, root_dir, logs_dir, mode, tag, queue, extra_args)
+            self._run_1d_scan_condor(ws, poi, values, root_dir, logs_dir, mode, tag, queue, extra_args, systematics)
         else:
             raise ValueError(f"Unknown backend: {backend}")
         
@@ -308,7 +320,8 @@ class QuickFitRunner:
         root_dir: str,
         logs_dir: str,
         mode: str,
-        extra_args: Optional[List[str]]
+        extra_args: Optional[List[str]],
+        systematics: str = "full_syst"
     ):
         """Run 1D scan locally."""
         prev_results = {}
@@ -321,7 +334,7 @@ class QuickFitRunner:
             
             # Build command
             output_file = os.path.join(root_dir, f"fit_{poi}_{val:.4f}.root")
-            cmd = self._build_command(ws, poi_string, output_file, extra_args)
+            cmd = self._build_command(ws, poi_string, output_file, extra_args, systematics=systematics)
             log_file = os.path.join(logs_dir, f"fit_{poi}_{val:.4f}.log")
             
             # Run
@@ -446,7 +459,8 @@ class QuickFitRunner:
         output_dir: str = ".",
         tag: Optional[str] = None,
         queue: str = "medium",
-        extra_args: Optional[List[str]] = None
+        extra_args: Optional[List[str]] = None,
+        systematics: str = "full_syst"
     ) -> str:
         """Run a 2D likelihood scan.
         
@@ -462,6 +476,7 @@ class QuickFitRunner:
             tag: Optional tag for output naming.
             queue: Condor queue.
             extra_args: Extra quickFit arguments.
+            systematics: Systematics mode ("full_syst" or "stat_only").
         
         Returns:
             Path to output directory with ROOT files.
@@ -483,9 +498,9 @@ class QuickFitRunner:
         self._log(f"Output: {root_dir}")
         
         if backend == "local":
-            self._run_2d_scan_local(ws, poi1, values1, poi2, values2, root_dir, logs_dir, mode, extra_args)
+            self._run_2d_scan_local(ws, poi1, values1, poi2, values2, root_dir, logs_dir, mode, extra_args, systematics)
         elif backend == "condor":
-            self._run_2d_scan_condor(ws, poi1, values1, poi2, values2, root_dir, logs_dir, mode, tag, queue, extra_args)
+            self._run_2d_scan_condor(ws, poi1, values1, poi2, values2, root_dir, logs_dir, mode, tag, queue, extra_args, systematics)
         else:
             raise ValueError(f"Unknown backend: {backend}")
         
@@ -501,7 +516,8 @@ class QuickFitRunner:
         root_dir: str,
         logs_dir: str,
         mode: str,
-        extra_args: Optional[List[str]]
+        extra_args: Optional[List[str]],
+        systematics: str = "full_syst"
     ):
         """Run 2D scan locally."""
         prev_results = {}
@@ -518,7 +534,7 @@ class QuickFitRunner:
                 
                 # Build command
                 output_file = os.path.join(root_dir, f"fit_{poi1}_{v1:.4f}__{poi2}_{v2:.4f}.root")
-                cmd = self._build_command(ws, poi_string, output_file, extra_args)
+                cmd = self._build_command(ws, poi_string, output_file, extra_args, systematics=systematics)
                 log_file = os.path.join(logs_dir, f"fit_{poi1}_{v1:.4f}__{poi2}_{v2:.4f}.log")
                 
                 # Run
@@ -600,9 +616,10 @@ class QuickFitRunner:
         tag: Optional[str] = None,
         queue: str = "medium",
         hesse: bool = True,
-        extra_args: Optional[List[str]] = None
+        extra_args: Optional[List[str]] = None,
+        systematics: str = "full_syst"
     ) -> str:
-        """Run a 3POI fit.
+        """Run a fit.
         
         Args:
             workspace: Workspace label from config.
@@ -612,6 +629,7 @@ class QuickFitRunner:
             queue: Condor queue.
             hesse: Run Hesse error calculation.
             extra_args: Extra quickFit arguments.
+            systematics: Systematics mode ("full_syst" or "stat_only").
         
         Returns:
             Path to output ROOT file.
@@ -630,7 +648,7 @@ class QuickFitRunner:
         
         # Build POI string for fit (all POIs floating)
         poi_string = self.poi_builder.build_fit()
-        cmd = self._build_command(ws, poi_string, output_file, extra_args, hesse=1 if hesse else 0)
+        cmd = self._build_command(ws, poi_string, output_file, extra_args, hesse=1 if hesse else 0, systematics=systematics)
         
         if backend == "local":
             log_file = os.path.join(logs_dir, "fit.log")
@@ -689,6 +707,10 @@ def main():
     # Fit options
     parser.add_argument('--hesse', action='store_true', help='Run Hesse (for fit)')
     
+    # Systematics options
+    parser.add_argument('--systematics', choices=['full_syst', 'stat_only'],
+                       default='full_syst', help='Systematics mode')
+    
     args = parser.parse_args()
     
     # Load config and create runner
@@ -708,7 +730,8 @@ def main():
             backend=args.backend,
             output_dir=args.output_dir,
             tag=args.tag,
-            queue=args.queue
+            queue=args.queue,
+            systematics=args.systematics
         )
     elif args.scan_type == '2d':
         if not all([args.poi, args.poi2, args.min is not None, args.max is not None,
@@ -728,7 +751,8 @@ def main():
             backend=args.backend,
             output_dir=args.output_dir,
             tag=args.tag,
-            queue=args.queue
+            queue=args.queue,
+            systematics=args.systematics
         )
     elif args.scan_type == 'fit':
         runner.run_fit(
@@ -737,7 +761,8 @@ def main():
             output_dir=args.output_dir,
             tag=args.tag,
             queue=args.queue,
-            hesse=args.hesse
+            hesse=args.hesse,
+            systematics=args.systematics
         )
 
 
