@@ -99,29 +99,29 @@ class RootToTxtConverter:
         self, 
         filepath: str, 
         poi: Optional[str] = None
-    ) -> Tuple[Optional[float], Optional[float]]:
-        """Get NLL value and POI value from scan tree.
+    ) -> Tuple[Optional[float], Optional[float], Optional[int]]:
+        """Get NLL value, POI value, and fit status from scan tree.
         
         Args:
             filepath: Path to ROOT file.
             poi: POI name (optional, for extracting value from tree).
         
         Returns:
-            Tuple of (poi_value, nll_value) or (None, None) if error.
+            Tuple of (poi_value, nll_value, status) or (None, None, None) if error.
         """
         tfile = ROOT.TFile.Open(filepath)
         if not tfile or tfile.IsZombie():
-            return (None, None)
+            return (None, None, None)
         
         tree = tfile.Get(self.tree_name)
         if not tree:
             tfile.Close()
-            return (None, None)
+            return (None, None, None)
         
         # Get first entry (scan files typically have one entry)
         if tree.GetEntries() == 0:
             tfile.Close()
-            return (None, None)
+            return (None, None, None)
         
         tree.GetEntry(0)
         
@@ -134,6 +134,15 @@ class RootToTxtConverter:
             except AttributeError:
                 continue
         
+        # Try to get fit status
+        status = None
+        for status_name in ['status', 'fitStatus', 'fit_status', 'covQual']:
+            try:
+                status = int(getattr(tree, status_name))
+                break
+            except (AttributeError, ValueError):
+                continue
+        
         # Try to get POI value
         poi_val = None
         if poi:
@@ -143,15 +152,14 @@ class RootToTxtConverter:
                 pass
         
         tfile.Close()
-        return (poi_val, nll)
+        return (poi_val, nll, status)
     
     def convert_1d_scan(
         self,
         input_dir: str,
         output_file: str,
         poi: str,
-        pattern: str = "fit_*.root",
-        reference_nll: Optional[float] = None
+        pattern: str = "fit_*.root"
     ) -> bool:
         """Convert 1D scan ROOT files to text format.
         
@@ -160,7 +168,6 @@ class RootToTxtConverter:
             output_file: Output text file path.
             poi: POI name being scanned.
             pattern: Glob pattern for ROOT files.
-            reference_nll: Reference NLL for delta calculation (uses minimum if None).
         
         Returns:
             True if successful, False otherwise.
@@ -173,14 +180,14 @@ class RootToTxtConverter:
             return False
         
         # Extract data points
-        points = []  # List of (poi_value, nll)
+        points = []  # List of (poi_value, nll, status)
         
         for filepath in files:
             filename = os.path.basename(filepath)
             
             # Get POI value from filename or tree
             poi_val = self._extract_poi_value_from_filename(filename, poi)
-            tree_poi_val, nll = self._get_nll_from_tree(filepath, poi)
+            tree_poi_val, nll, status = self._get_nll_from_tree(filepath, poi)
             
             if poi_val is None:
                 poi_val = tree_poi_val
@@ -189,7 +196,11 @@ class RootToTxtConverter:
                 print(f"Warning: Could not extract data from {filename}", file=sys.stderr)
                 continue
             
-            points.append((poi_val, nll))
+            # Default status to 0 if not found
+            if status is None:
+                status = 0
+            
+            points.append((poi_val, nll, status))
         
         if not points:
             print("Error: No valid data points extracted", file=sys.stderr)
@@ -198,19 +209,12 @@ class RootToTxtConverter:
         # Sort by POI value
         points.sort(key=lambda x: x[0])
         
-        # Calculate delta NLL
-        if reference_nll is None:
-            reference_nll = min(p[1] for p in points)
-        
-        # Write output
+        # Write output with raw NLL values and status
         os.makedirs(os.path.dirname(output_file) or '.', exist_ok=True)
         with open(output_file, 'w') as f:
-            f.write(f"# 1D scan: {poi}\n")
-            f.write(f"# Reference NLL: {reference_nll}\n")
-            f.write(f"# {poi} deltaNLL\n")
-            for poi_val, nll in points:
-                delta_nll = nll - reference_nll
-                f.write(f"{poi_val:.6f} {delta_nll:.6f}\n")
+            f.write(f"{poi}\tnll\tstatus\n")
+            for poi_val, nll, status in points:
+                f.write(f"{poi_val:.6f}\t{nll:.12f}\t{status}\n")
         
         print(f"Wrote {len(points)} points to {output_file}")
         return True
@@ -221,8 +225,7 @@ class RootToTxtConverter:
         output_file: str,
         poi1: str,
         poi2: str,
-        pattern: str = "fit_*.root",
-        reference_nll: Optional[float] = None
+        pattern: str = "fit_*.root"
     ) -> bool:
         """Convert 2D scan ROOT files to text format.
         
@@ -232,7 +235,6 @@ class RootToTxtConverter:
             poi1: First POI name.
             poi2: Second POI name.
             pattern: Glob pattern for ROOT files.
-            reference_nll: Reference NLL for delta calculation.
         
         Returns:
             True if successful, False otherwise.
@@ -245,7 +247,7 @@ class RootToTxtConverter:
             return False
         
         # Extract data points
-        points = []  # List of (poi1_value, poi2_value, nll)
+        points = []  # List of (poi1_value, poi2_value, nll, status)
         
         for filepath in files:
             filename = os.path.basename(filepath)
@@ -254,14 +256,18 @@ class RootToTxtConverter:
             val1 = self._extract_poi_value_from_filename(filename, poi1)
             val2 = self._extract_poi_value_from_filename(filename, poi2)
             
-            # Get NLL from tree
-            _, nll = self._get_nll_from_tree(filepath)
+            # Get NLL and status from tree
+            _, nll, status = self._get_nll_from_tree(filepath)
             
             if val1 is None or val2 is None or nll is None:
                 print(f"Warning: Could not extract data from {filename}", file=sys.stderr)
                 continue
             
-            points.append((val1, val2, nll))
+            # Default status to 0 if not found
+            if status is None:
+                status = 0
+            
+            points.append((val1, val2, nll, status))
         
         if not points:
             print("Error: No valid data points extracted", file=sys.stderr)
@@ -270,19 +276,12 @@ class RootToTxtConverter:
         # Sort by poi1, then poi2
         points.sort(key=lambda x: (x[0], x[1]))
         
-        # Calculate delta NLL
-        if reference_nll is None:
-            reference_nll = min(p[2] for p in points)
-        
-        # Write output
+        # Write output with raw NLL values and status
         os.makedirs(os.path.dirname(output_file) or '.', exist_ok=True)
         with open(output_file, 'w') as f:
-            f.write(f"# 2D scan: {poi1} vs {poi2}\n")
-            f.write(f"# Reference NLL: {reference_nll}\n")
-            f.write(f"# {poi1} {poi2} deltaNLL\n")
-            for val1, val2, nll in points:
-                delta_nll = nll - reference_nll
-                f.write(f"{val1:.6f} {val2:.6f} {delta_nll:.6f}\n")
+            f.write(f"{poi1}\t{poi2}\tnll\tstatus\n")
+            for val1, val2, nll, status in points:
+                f.write(f"{val1:.6f}\t{val2:.6f}\t{nll:.12f}\t{status}\n")
         
         print(f"Wrote {len(points)} points to {output_file}")
         return True
