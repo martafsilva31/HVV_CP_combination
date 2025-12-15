@@ -208,30 +208,31 @@ class QuickFitRunner:
         """Write a Condor job wrapper script."""
         with open(wrapper_path, 'w') as f:
             f.write("#!/bin/bash\n")
-            f.write("set -e\n\n")
+            f.write("# Do NOT use set -e to avoid premature exit on non-critical failures\n\n")
             
             # Environment setup
-            f.write("# Setup environment\n")
+            f.write("# Setup ATLAS LCG environment\n")
             f.write("export ATLAS_LOCAL_ROOT_BASE=/cvmfs/atlas.cern.ch/repo/ATLASLocalRootBase\n")
-            f.write("source ${ATLAS_LOCAL_ROOT_BASE}/user/atlasLocalSetup.sh 2>/dev/null || true\n")
+            f.write("source ${ATLAS_LOCAL_ROOT_BASE}/user/atlasLocalSetup.sh\n")
+            f.write("export PYTHONPATH=/cvmfs/atlas.cern.ch/repo/sw/software/0.3/lcg/rel1/Python/x86_64-el9-gcc13-opt/lib/python3.10/site-packages:${PYTHONPATH}\n\n")
             
-            # Always source setupATLAS and asetup for Condor jobs
-            f.write("setupATLAS 2>/dev/null || true\n")
-            f.write("asetup StatAnalysis,0.3.1 2>/dev/null || true\n")
+            f.write(f"cd {workdir}\n\n")
             
-            if setup_script:
-                f.write(f"source {setup_script} 2>/dev/null || true\n")
-            else:
-                f.write("# Try standard quickFit setup\n")
-                f.write("if [ -f /project/atlas/users/mfernand/software/quickFit/setup_lxplus.sh ]; then\n")
-                f.write("  source /project/atlas/users/mfernand/software/quickFit/setup_lxplus.sh\n")
-                f.write("fi\n")
+            # Commands with error tracking
+            f.write("FAILED=0\n")
+            f.write("FAILED_POINT=\"\"\n\n")
             
-            f.write(f"\ncd {workdir}\n\n")
-            
-            # Commands
             for cmd in commands:
                 f.write(f"{cmd}\n")
+                f.write("if [ $? -ne 0 ]; then\n")
+                f.write("  FAILED=1\n")
+                f.write("  FAILED_POINT=\"$FAILED_POINT {cmd}\"\n")
+                f.write("fi\n\n")
+            
+            f.write("if [ $FAILED -eq 1 ]; then\n")
+            f.write('  echo "ERROR: Job failed at: $FAILED_POINT" >&2\n')
+            f.write("  exit 1\n")
+            f.write("fi\n")
         
         os.chmod(wrapper_path, 0o755)
     
