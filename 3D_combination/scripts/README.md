@@ -7,6 +7,14 @@ statistical analyses. It is designed with separation of concerns:
 - **Analysis-specific configs** (`configs/`) - HVV CP specific settings
 - **User-facing scripts** (`3POI_*/`, `plotting/`) - Convenient wrappers
 
+> **Note**: Despite the "3POI" naming (from the HVV CP analysis context), these scripts
+> are **fully generic** and support:
+> - **1D scans**: Any single POI (1POI, 2POI, 3POI, or N-POI fits)
+> - **2D scans**: Any two POIs simultaneously
+> - **Fits**: Any number of floating POIs
+>
+> Simply specify different `--poi` arguments to scan/fit different parameters!
+
 ## Directory Structure
 
 ```
@@ -55,12 +63,18 @@ scripts/
 ### Environment Setup
 
 ```bash
-# Source quickFit environment
-source /project/atlas/users/mfernand/software/quickFit/setup_lxplus.sh
+# Navigate to HVV_CP_comb root
+cd /project/atlas/users/mfernand/HVV_CP_comb
 
-# For plotting, also source RooFitUtils
-source /project/atlas/users/mfernand/software/RooFitUtils/setup.sh
+# For scans/fits (quickFit)
+source setup.sh quickfit
+
+# For plotting (RooFitUtils) - cannot run simultaneously with quickFit
+source setup.sh plotting
 ```
+
+> **Important**: quickFit and RooFitUtils are incompatible. Use `setup.sh quickfit` for 
+> scans/fits, then re-source with `setup.sh plotting` when ready to plot.
 
 ### Running a 1D Scan
 
@@ -142,7 +156,27 @@ Edit this file to modify:
 - **Workspaces**: Input ROOT file paths
 - **POIs**: Wilson coefficients and signal strength parameters
 - **Scan ranges**: Default min/max/npoints per POI
+- **Systematics**: `stat_only` vs `full_syst` NP fixing patterns
 - **Exclude NPs**: Nuisance parameters to exclude from fits
+
+### Systematics Configuration
+
+The YAML defines two systematic treatment modes:
+
+```yaml
+systematics:
+  stat_only:
+    fix_nps:
+      - "ATLAS_JES*"
+      - "ATLAS_LUMI*"
+      # ... all experimental/theory systematics
+  
+  full_syst:
+    fix_nps:
+      - "*_HZZ_spurious"  # Only known problematic NPs
+```
+
+Use these in your scripts by reading from the config.
 
 ### Creating a New Analysis Configuration
 
@@ -172,9 +206,57 @@ float_pois:
     max: 10.0
 ```
 
+## Flexibility: 1POI, 2POI, 3POI, or N-POI
+
+Despite the "3POI" naming convention (inherited from the HVV CP analysis), **all scripts
+are fully generic**:
+
+### 1D Scans (Any Single POI)
+
+```bash
+# Scan just one Wilson coefficient (1POI fit with others profiled)
+./3POI_1D_scan/run_1d_scans.sh --workspace linear_obs --poi cHWtil_combine --min -1 --max 1
+
+# Scan a signal strength parameter
+./3POI_1D_scan/run_1d_scans.sh --workspace linear_obs --poi mu_Signal_HZZ --min 0 --max 2
+
+# Scan any POI from your workspace
+./3POI_1D_scan/run_1d_scans.sh --workspace linear_obs --poi myCustomPOI --min -5 --max 5
+```
+
+### Fits (Any Number of POIs)
+
+The fit scripts float all POIs defined in the config. To run a **1POI** or **2POI** fit:
+
+1. Create a custom config YAML with only the POIs you want to float
+2. Or use the Python API to specify exactly which POIs to float:
+
+```python
+from quickfit.runner import QuickFitRunner
+from utils.config import AnalysisConfig
+
+config = AnalysisConfig.from_yaml('configs/hvv_cp_combination.yaml')
+runner = QuickFitRunner(config)
+
+# 1POI fit: Only float cHWtil_combine
+runner.run_fit(workspace='linear_obs', hesse=True)  # Floats all in config
+
+# For custom POI selection, modify the config or call quickFit directly
+```
+
+### 2D Scans (Any Two POIs)
+
+```bash
+# Scan any two POIs
+./3POI_2D_scan/run_2d_scans.sh \
+    --workspace linear_obs \
+    --poi1 cHWtil_combine --min1 -1 --max1 1 --n1 21 \
+    --poi2 mu_Signal_HZZ --min2 0 --max2 2 --n2 21
+```
+
 ## Python API
 
-You can also use the modules directly from Python:
+You can also use the modules directly from Python for maximum flexibility:
 
 ```python
 from utils.config import AnalysisConfig
@@ -186,15 +268,15 @@ config = AnalysisConfig.from_yaml('configs/hvv_cp_combination.yaml')
 # Create runner
 runner = QuickFitRunner(config)
 
-# Run 1D scan
+# Run 1D scan on any POI
 runner.run_1d_scan(
     workspace='linear_obs',
-    poi='cHWtil_combine',
+    poi='cHWtil_combine',  # Can be ANY POI in your workspace
     min_val=-1, max_val=1, n_points=21,
     mode='parallel', backend='condor'
 )
 
-# Run 2D scan
+# Run 2D scan on any two POIs
 runner.run_2d_scan(
     workspace='linear_obs',
     poi1='cHWtil_combine', min1=-1, max1=1, n1=21,
@@ -202,7 +284,7 @@ runner.run_2d_scan(
     mode='parallel', backend='condor'
 )
 
-# Run fit
+# Run fit with all configured POIs floating
 runner.run_fit(workspace='linear_obs', hesse=True)
 ```
 

@@ -44,53 +44,59 @@ ulimit -s unlimited
 └── output/                # Results
 ```
 
-## Step 1: Workspace Preparation
+## Step 1: Workspace Combination
 
-### 1.1 Obtain Channel Workspaces
+If you need to regenerate combined workspaces from scratch, follow the 4-step
+combination pipeline. **Otherwise, skip to Step 2 if combined workspaces already exist.**
 
-Place the original channel workspaces in `original_ws/`:
-- `hZZ_CP_3D.root` - H→ZZ channel
-- `hWW_CP_3D.root` - H→WW channel
-- `hTauTau_CP_3D.root` - H→ττ channel
-- `hbb_VH_CP_3D.root` - VH→bb channel
+See [run_combination/README.md](run_combination/README.md) for detailed documentation.
 
-### 1.2 Edit Workspaces (if needed)
+### Quick Combination Workflow
 
 ```bash
-cd run_combination
-# Apply any required workspace edits (POI renaming, constraint removal)
-./01_edit_workspaces.sh
+# Setup WorkspaceCombiner
+cd /project/atlas/users/mfernand/software/workspaceCombiner
+source setup_lxplus.sh
+
+# Navigate to combination directory
+cd /project/atlas/users/mfernand/HVV_CP_comb/3D_combination/run_combination
+
+# Run 4-step pipeline
+cd 1_ws_editing && bash 1.WSEditing.sh          # Split channel workspaces
+cd ../2_POI_editing && bash 2.POIEditing.sh     # Edit POI definitions
+cd ../3_ws_combine && bash 3.WSCombine.sh       # Combine channels
+cd ../4_generate_asimov && bash 4.genAsimov.sh  # Generate Asimov datasets
+
+# Verify outputs
+ls -lh ../combined_ws/*.root
 ```
 
-## Step 2: Combine Workspaces
+**Expected outputs**:
+- `combined_ws/combined_linear_obs.root` - Linear EFT, observed
+- `combined_ws/combine_linear_asimov.root` - Linear EFT, Asimov
+- `combined_ws/combined_quad_obs.root` - Quadratic EFT, observed
+- `combined_ws/combine_quad_asimov.root` - Quadratic EFT, Asimov
 
-### 2.1 Run the Combination
+> **Note**: This step only needs to be done once, or when input channel workspaces change.
+> The combined workspaces are already available in `combined_ws/` for analysis.
 
-```bash
-cd run_combination
+## Step 2: Analysis Setup
 
-# Linear combination (observed data)
-./02_combine_linear.sh --data obs
-
-# Linear combination (Asimov data)
-./02_combine_linear.sh --data asimov
-
-# Quadratic combination (if available)
-./02_combine_quadratic.sh --data obs
-./02_combine_quadratic.sh --data asimov
-```
-
-### 2.2 Verify Combined Workspaces
+### 2.1 Verify Combined Workspaces
 
 ```bash
 # Check workspace contents
 python -c "
 import ROOT
-f = ROOT.TFile('combined_ws/linear_obs.root')
+f = ROOT.TFile('combined_ws/combined_linear_obs.root')
 ws = f.Get('combWS')
 ws.Print()
+mc = ws.obj('ModelConfig')
+mc.GetParametersOfInterest().Print()
 "
 ```
+
+Expected POIs: `cHWtil_combine`, `cHBtil_combine`, `cHWBtil_combine`, plus channel-specific POIs.
 
 ## Step 3: Run 3POI Fits
 
