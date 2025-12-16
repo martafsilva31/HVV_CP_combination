@@ -149,6 +149,7 @@ class QuickFitRunner:
         output_file: str,
         extra_args: Optional[List[str]] = None,
         hesse: int = 0,
+        minos: int = 0,
         systematics: str = "full_syst"
     ) -> QuickFitCommand:
         """Build a quickFit command.
@@ -158,7 +159,8 @@ class QuickFitRunner:
             poi_string: POI string for quickFit.
             output_file: Output file path.
             extra_args: Additional arguments.
-            hesse: Whether to compute Hesse errors.
+            hesse: Whether to compute Hesse errors (0 or 1).
+            minos: Whether to compute MINOS errors (0 or 1).
             systematics: Systematics mode ("full_syst" or "stat_only").
         """
         defaults = self.config.quickfit_defaults
@@ -171,7 +173,7 @@ class QuickFitRunner:
             exclude_nps=self.config.get_exclude_nps_pattern(systematics=systematics),
             extra_args=extra_args or [],
             min_tolerance=defaults.get('min_tolerance', 0.0001),
-            minos=defaults.get('minos', 0),
+            minos=minos if minos else defaults.get('minos', 0),
             hesse=hesse,
             save_fit_result=defaults.get('save_fit_result', 1),
             save_errors=defaults.get('save_errors', 1)
@@ -572,12 +574,53 @@ class QuickFitRunner:
     ):
         """Submit 2D scan to Condor."""
         workdir = os.getcwd()
+        scripts_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         
         if mode == "sequential":
-            # Sequential 2D scans are complex - submit as single long job
-            self._log("Note: Sequential 2D scans submitted as single long-running job")
-            # Implementation similar to 1D sequential...
-            # For brevity, parallel is the main use case for 2D
+            # Single job that runs all points sequentially
+            wrapper_path = os.path.join(logs_dir, f"{tag}_sequential.sh")
+            submit_path = os.path.join(logs_dir, f"{tag}_sequential.sub")
+            
+            # Build wrapper with sequential logic
+            commands = [
+                f"# Sequential 2D scan: {poi1} x {poi2}",
+                f"cd {workdir}",
+                f"prev_results=\"\"",
+                f"",
+            ]
+            
+            for v1 in values1:
+                for v2 in values2:
+                    v1_str = f"{v1:.4f}"
+                    v2_str = f"{v2:.4f}"
+                    output_file = os.path.join(root_dir, f"fit_{poi1}_{v1_str}__{poi2}_{v2_str}.root")
+                    
+                    commands.append(f"echo \"===== Fitting {poi1}={v1_str}, {poi2}={v2_str} =====\"")
+                    commands.append(
+                        f"pois=$(python3 {scripts_dir}/utils/poi_builder.py "
+                        f"--config {scripts_dir}/configs/hvv_cp_combination.yaml "
+                        f"--scan-type 2d --scan-par {poi1} --scan-val {v1} "
+                        f"--scan-par2 {poi2} --scan-val2 {v2} "
+                        f"--previous \"$prev_results\")"
+                    )
+                    
+                    cmd = self._build_command(ws, '"$pois"', output_file, extra_args, systematics=systematics)
+                    commands.append(cmd.to_string().replace('"$pois"', '"$pois"'))
+                    
+                    commands.append(f"if [ -f \"{output_file}\" ]; then")
+                    commands.append(
+                        f"  prev_results=$(python3 {scripts_dir}/utils/fit_result_parser.py "
+                        f"--input \"{output_file}\" --pois-only 2>/dev/null | tr '\\n' ',' | sed 's/,$//' || echo \"\")"
+                    )
+                    commands.append(f"fi")
+                    commands.append("")
+            
+            self._write_condor_wrapper(wrapper_path, commands, workdir)
+            self._write_condor_submit(submit_path, wrapper_path, logs_dir, f"{tag}_sequential", queue)
+            
+            subprocess.run(['condor_submit', submit_path], check=True)
+            self._log(f"Submitted sequential 2D scan job: {tag}")
+            return
         
         # Parallel: one job per point
         submit_path = os.path.join(logs_dir, f"{tag}_parallel.sub")
@@ -623,6 +666,7 @@ class QuickFitRunner:
         tag: Optional[str] = None,
         queue: str = "medium",
         hesse: bool = True,
+        minos: int = 0,
         extra_args: Optional[List[str]] = None,
         systematics: str = "full_syst"
     ) -> str:
@@ -635,6 +679,7 @@ class QuickFitRunner:
             tag: Optional tag for output naming.
             queue: Condor queue.
             hesse: Run Hesse error calculation.
+            minos: Run MINOS error calculation (0 or 1).
             extra_args: Extra quickFit arguments.
             systematics: Systematics mode ("full_syst" or "stat_only").
         
@@ -655,7 +700,7 @@ class QuickFitRunner:
         
         # Build POI string for fit (all POIs floating)
         poi_string = self.poi_builder.build_fit()
-        cmd = self._build_command(ws, poi_string, output_file, extra_args, hesse=1 if hesse else 0, systematics=systematics)
+        cmd = self._build_command(ws, poi_string, output_file, extra_args, hesse=1 if hesse else 0, minos=minos, systematics=systematics)
         
         if backend == "local":
             log_file = os.path.join(logs_dir, "fit.log")
@@ -713,6 +758,7 @@ def main():
     
     # Fit options
     parser.add_argument('--hesse', action='store_true', help='Run Hesse (for fit)')
+    parser.add_argument('--minos', type=int, default=0, help='Run MINOS (0 or 1, for fit)')
     
     # Systematics options
     parser.add_argument('--systematics', choices=['full_syst', 'stat_only'],
@@ -769,6 +815,7 @@ def main():
             tag=args.tag,
             queue=args.queue,
             hesse=args.hesse,
+            minos=args.minos,
             systematics=args.systematics
         )
 

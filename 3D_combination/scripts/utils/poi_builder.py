@@ -27,8 +27,17 @@ Example usage:
 """
 
 import argparse
+import sys
+import os
 from typing import Dict, List, Optional, Any
-from .config import AnalysisConfig, POIConfig
+
+# Handle both module and script execution
+try:
+    from .config import AnalysisConfig, POIConfig
+except ImportError:
+    # When run as a script, add parent directory to path
+    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+    from config import AnalysisConfig, POIConfig
 
 
 class POIBuilder:
@@ -116,7 +125,7 @@ class POIBuilder:
                 if scan_poi not in self.scan_pois:
                     pois.append(f"{poi}={scan_value:.6f}")
             elif scanning_combine:
-                # Scanning a combine POI: fix individual coeffs at 1
+                # Scanning a combine POI: fix individual channel coeffs at 1
                 pois.append(f"{poi}=1")
             else:
                 # Scanning an individual POI: float other individual coeffs
@@ -244,9 +253,13 @@ class POIBuilder:
             r = ranges.get(poi, {'min': -3, 'max': 3})
             pois.append(f"{poi}={default:.6f}_{r['min']}_{r['max']}")
         
+        # Fix individual channel Wilson coefficients at 1 for fits
+        for poi in self.individual_wilson_coeffs:
+            pois.append(f"{poi}=1")
+        
         # Float POIs
         for name, poi_config in self.float_pois.items():
-            if name in self.scan_pois:
+            if name in self.scan_pois or name in self.individual_wilson_coeffs:
                 continue
             default = prev.get(name, poi_config.default)
             pois.append(poi_config.to_quickfit_str(default))

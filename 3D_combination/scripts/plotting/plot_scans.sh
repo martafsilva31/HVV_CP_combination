@@ -23,7 +23,7 @@ POI2=""
 OUTPUT=""
 LABEL=""
 LABEL2=""
-PERCENT_LEVEL="68"
+PERCENT_LEVEL=""
 
 usage() {
     cat << EOF
@@ -45,7 +45,7 @@ Optional:
   --output-dir <dir>    Output directory
   --label <text>        POI axis label (default: auto from POI name)
   --label2 <text>       Second POI axis label (for 2D)
-  --cl <level>          Confidence level (default: 68)
+  --cl <level>          Confidence level (optional, e.g., 68 or 95)
   -h, --help            Show this help message
 
 Notes:
@@ -93,6 +93,17 @@ if [[ -z "$OBS_FILE" && -z "$EXP_FILE" ]]; then
     usage
 fi
 
+# Convert input file paths to absolute (before any cd changes working directory)
+if [[ -n "$OBS_FILE" && "$OBS_FILE" != /* ]]; then
+    OBS_FILE="$(pwd)/$OBS_FILE"
+fi
+if [[ -n "$EXP_FILE" && "$EXP_FILE" != /* ]]; then
+    EXP_FILE="$(pwd)/$EXP_FILE"
+fi
+if [[ -n "$OUTPUT_DIR" && "$OUTPUT_DIR" != /* ]]; then
+    OUTPUT_DIR="$(pwd)/$OUTPUT_DIR"
+fi
+
 # Check for plotscan.py
 if ! command -v plotscan.py &> /dev/null; then
     echo "Error: plotscan.py not found in PATH"
@@ -122,11 +133,23 @@ fi
 # Generate output filename
 if [[ -z "$OUTPUT" ]]; then
     if [[ "$TYPE" == "1d" ]]; then
-        OUTPUT="${OUTPUT_DIR}/scan_${POI}.tex"
+        OUTPUT="${OUTPUT_DIR}/scan_${POI}.pdf"
     else
-        OUTPUT="${OUTPUT_DIR}/scan_${POI}_${POI2}.tex"
+        OUTPUT="${OUTPUT_DIR}/scan_${POI}_${POI2}.pdf"
+    fi
+else
+    # Ensure output has .pdf extension
+    if [[ "$OUTPUT" != *.pdf ]]; then
+        OUTPUT="${OUTPUT}.pdf"
+    fi
+    # If OUTPUT doesn't contain a path separator, prepend OUTPUT_DIR
+    if [[ "$OUTPUT" != */* ]]; then
+        OUTPUT="${OUTPUT_DIR}/${OUTPUT}"
     fi
 fi
+
+# Get the .tex output path
+TEX_OUTPUT="${OUTPUT%.pdf}.tex"
 
 echo "=============================================="
 echo "Plotting Likelihood Scan"
@@ -146,38 +169,50 @@ echo
 cmd=(plotscan.py)
 
 if [[ -n "$OBS_FILE" ]]; then
-    cmd+=(--input "color='black',legend=\"Obs\"" "$OBS_FILE")
+    cmd+=(--input "color=black,legend=Obs" "$OBS_FILE")
 fi
 
 if [[ -n "$EXP_FILE" ]]; then
-    cmd+=(--input "color='blue',legend=\"Exp\"" "$EXP_FILE")
+    cmd+=(--input "color=blue,legend=Exp" "$EXP_FILE")
 fi
 
-cmd+=(-o "$OUTPUT")
+cmd+=(-o "$TEX_OUTPUT")
 cmd+=(--label "$LABEL")
 
 if [[ "$TYPE" == "2d" && -n "$LABEL2" ]]; then
     cmd+=("$LABEL2")
 fi
 
-cmd+=(--percent-level "$PERCENT_LEVEL")
+if [[ -n "$PERCENT_LEVEL" ]]; then
+    cmd+=(--percent-level "$PERCENT_LEVEL")
+fi
 
 echo "Running: ${cmd[*]}"
 "${cmd[@]}"
 
+# Fix bugs in plotscan.py output
+if [[ -f "$TEX_OUTPUT" ]]; then
+    # Fix duplicate tikzpicture environment
+    sed -i 's/\\begin{tikzpicture}\[font={\\fontfamily{qhv}\\selectfont}\]/% removed duplicate tikzpicture/' "$TEX_OUTPUT"
+    # Fix escaped underscores in math mode (\_  should be _ inside $...$)
+    sed -i 's/\$\([^$]*\)\\_\([^$]*\)\$/\$\1_\2\$/g' "$TEX_OUTPUT"
+    # Run multiple times to catch all underscores
+    sed -i 's/\$\([^$]*\)\\_\([^$]*\)\$/\$\1_\2\$/g' "$TEX_OUTPUT"
+    sed -i 's/\$\([^$]*\)\\_\([^$]*\)\$/\$\1_\2\$/g' "$TEX_OUTPUT"
+fi
+
 # Try to compile PDF
-PDF_OUTPUT="${OUTPUT%.tex}.pdf"
 if command -v pdflatex &> /dev/null; then
     echo
     echo "Compiling PDF..."
-    cd "$(dirname "$OUTPUT")"
-    pdflatex -interaction=nonstopmode "$(basename "$OUTPUT")" > /dev/null 2>&1 || true
+    cd "$(dirname "$TEX_OUTPUT")"
+    pdflatex -interaction=nonstopmode "$(basename "$TEX_OUTPUT")" > /dev/null 2>&1 || true
     
-    if [[ -f "$PDF_OUTPUT" ]]; then
-        echo "PDF created: $PDF_OUTPUT"
+    if [[ -f "$OUTPUT" ]]; then
+        echo "PDF created: $OUTPUT"
+    else
+        echo "Warning: PDF compilation may have failed. Check .tex file."
     fi
-else
-    echo "pdflatex not found, skipping PDF compilation"
 fi
 
 echo

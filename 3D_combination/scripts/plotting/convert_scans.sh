@@ -95,6 +95,11 @@ if [[ -z "$INPUT_DIR" || ! -d "$INPUT_DIR" ]]; then
     exit 1
 fi
 
+# Convert INPUT_DIR to absolute path if relative (before cd changes working directory)
+if [[ "$INPUT_DIR" != /* ]]; then
+    INPUT_DIR="$(pwd)/$INPUT_DIR"
+fi
+
 # Derive output file
 if [[ -z "$OUTPUT_FILE" ]]; then
     OUTPUT_DIR="$(dirname "$INPUT_DIR")"

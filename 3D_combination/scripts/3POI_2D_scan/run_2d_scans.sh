@@ -103,6 +103,11 @@ if [[ -z "$WORKSPACE" || -z "$POI1" || -z "$MIN1" || -z "$MAX1" || \
     usage
 fi
 
+# Convert OUTPUT_DIR to absolute path if relative
+if [[ "$OUTPUT_DIR" != /* ]]; then
+    OUTPUT_DIR="$(pwd)/$OUTPUT_DIR"
+fi
+
 mkdir -p "$OUTPUT_DIR"
 
 if [[ -z "$TAG" ]]; then

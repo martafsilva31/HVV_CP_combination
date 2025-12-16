@@ -20,6 +20,7 @@ OUTPUT_DIR="${SCRIPT_DIR}/../../output/3POI_fits"
 TAG=""
 QUEUE="medium"
 HESSE=true
+MINOS=false
 
 usage() {
     cat << EOF
@@ -36,7 +37,10 @@ Optional:
   --output-dir <dir>    Output directory
   --tag <tag>           Tag for output naming
   --queue <queue>       Condor queue (default: medium)
+  --hesse               Run Hesse error calculation (default: true)
   --no-hesse            Skip Hesse error calculation
+  --minos               Run MINOS error calculation
+  --no-minos            Skip MINOS error calculation (default)
   --config <file>       Config file
   -h, --help            Show this help message
 
@@ -44,8 +48,8 @@ Examples:
   # Local fit with Hesse
   $(basename "$0") --workspace linear_obs --backend local
 
-  # Condor fit without Hesse
-  $(basename "$0") --workspace quad_obs --backend condor --no-hesse
+  # Condor fit with MINOS, no Hesse
+  $(basename "$0") --workspace quad_obs --backend condor --no-hesse --minos
 
 EOF
     exit 0
@@ -61,6 +65,8 @@ while [[ $# -gt 0 ]]; do
         --queue) QUEUE="$2"; shift 2;;
         --no-hesse) HESSE=false; shift;;
         --hesse) HESSE=true; shift;;
+        --minos) MINOS=true; shift;;
+        --no-minos) MINOS=false; shift;;
         --config) CONFIG="$2"; shift 2;;
         -h|--help) usage;;
         *) echo "Unknown option: $1"; usage;;
@@ -70,6 +76,11 @@ done
 if [[ -z "$WORKSPACE" ]]; then
     echo "Error: --workspace is required"
     usage
+fi
+
+# Convert OUTPUT_DIR to absolute path if relative
+if [[ "$OUTPUT_DIR" != /* ]]; then
+    OUTPUT_DIR="$(pwd)/$OUTPUT_DIR"
 fi
 
 mkdir -p "$OUTPUT_DIR"
@@ -85,6 +96,7 @@ echo "  Workspace:  $WORKSPACE"
 echo "  Backend:    $BACKEND"
 echo "  Systematics: $SYSTEMATICS"
 echo "  Hesse:      $HESSE"
+echo "  MINOS:      $MINOS"
 echo "  Output:     $OUTPUT_DIR"
 echo "  Tag:        $TAG"
 echo "=============================================="
@@ -97,6 +109,11 @@ if $HESSE; then
     HESSE_FLAG="--hesse"
 fi
 
+MINOS_VAL=0
+if $MINOS; then
+    MINOS_VAL=1
+fi
+
 python3 -m quickfit.runner \
     --config "$CONFIG" \
     --scan-type fit \
@@ -106,6 +123,7 @@ python3 -m quickfit.runner \
     --output-dir "$OUTPUT_DIR" \
     --tag "$TAG" \
     --queue "$QUEUE" \
+    --minos "$MINOS_VAL" \
     $HESSE_FLAG
 
 echo

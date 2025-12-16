@@ -93,6 +93,11 @@ if [[ -z "$WORKSPACE" || -z "$POI" || -z "$MIN" || -z "$MAX" ]]; then
     usage
 fi
 
+# Convert OUTPUT_DIR to absolute path if relative
+if [[ "$OUTPUT_DIR" != /* ]]; then
+    OUTPUT_DIR="$(pwd)/$OUTPUT_DIR"
+fi
+
 # Create output directory
 mkdir -p "$OUTPUT_DIR"
 

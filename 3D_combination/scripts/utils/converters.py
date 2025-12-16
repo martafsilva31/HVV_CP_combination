@@ -293,16 +293,6 @@ class RootToTxtConverter:
         
         print(f"Wrote {len(points)} points to {output_file}")
         return True
-        with open(output_file, 'w') as f:
-            # Header with parameter names
-            f.write(f"{poi1}\t{poi2}\tdeltaNLL\n")
-            # Data: POI1 POI2 deltaNLL
-            for val1, val2, nll in points:
-                delta_nll = nll - nll_min
-                f.write(f"{val1:.6f}\t{val2:.6f}\t{delta_nll:.6f}\n")
-        
-        print(f"Wrote {len(points)} points to {output_file}")
-        return True
 
 
 def main():
