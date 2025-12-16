@@ -138,12 +138,12 @@ def plot_3poi_profile(data, scanned_poi, floating_pois, output_file,
         title: plot title (not used, kept for API compatibility)
         data_type: 'Data' or 'Asimov'
     """
-    # Default POI labels
+    # Default POI labels - matching plotscan.py style (tilde on W/B, not on c)
     if poi_labels is None:
         poi_labels = {
-            'cHWtil_combine': r'$\tilde{c}_{HW}$',
-            'cHBtil_combine': r'$\tilde{c}_{HB}$',
-            'cHWBtil_combine': r'$\tilde{c}_{H\tilde{W}B}$',
+            'cHWtil_combine': r'$c_{H\tilde{W}}$',
+            'cHBtil_combine': r'$c_{H\tilde{B}}$',
+            'cHWBtil_combine': r'$c_{H\tilde{W}B}$',
         }
     
     # Get display labels
@@ -165,7 +165,8 @@ def plot_3poi_profile(data, scanned_poi, floating_pois, output_file,
     x_best = data['scanned_poi'][best_idx]
     
     # --- Top panel: deltaNLL (matching plotscan.py style) ---
-    ax_nll.plot(data['scanned_poi'], data['deltaNLL'], 'k-', linewidth=1.5)
+    # Points connected by line
+    ax_nll.plot(data['scanned_poi'], data['deltaNLL'], 'ko-', markersize=3, linewidth=1)
     ax_nll.axhline(1, color='black', linestyle='--', linewidth=1)
     ax_nll.axhline(3.84, color='black', linestyle='--', linewidth=1)
     
@@ -173,11 +174,14 @@ def plot_3poi_profile(data, scanned_poi, floating_pois, output_file,
     ax_nll.set_ylim(0, max(10, 1.2 * max(data['deltaNLL'])))
     ax_nll.tick_params(labelbottom=False)
     
+    # ATLAS label in plotscan.py style
     if show_atlas:
-        ax_nll.text(0.05, 0.95, 'ATLAS', fontsize=14, fontweight='bold', 
-                   transform=ax_nll.transAxes, verticalalignment='top')
-        ax_nll.text(0.18, 0.95, 'Internal', fontsize=12,
-                   transform=ax_nll.transAxes, verticalalignment='top', style='italic')
+        ax_nll.text(0.05, 0.95, 'ATLAS ', fontsize=16, fontweight='bold', 
+                   transform=ax_nll.transAxes, verticalalignment='top',
+                   fontfamily='sans-serif')
+        ax_nll.text(0.19, 0.95, 'Internal', fontsize=14,
+                   transform=ax_nll.transAxes, verticalalignment='top', 
+                   style='italic', fontfamily='sans-serif')
     
     # --- Bottom panel: Both floating POIs in same ratio plot with error bars ---
     for i, (fp, label) in enumerate(zip(floating_pois, floating_labels)):
