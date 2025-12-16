@@ -1,208 +1,204 @@
 #!/bin/bash
 # Plot 3POI profile scan results showing profiled values of floating Wilson coefficients
 #
-# Usage: ./plot_3poi_profile.sh [options]
+# Usage: ./plot_3poi_profile.sh --input <dir> --poi <poi> [options]
 #
-# Options:
-#   --name NAME           Scan name (default: linear_asimov)
-#   --model MODEL         Model type: linear_only or quadratic (default: linear_only)
-#   --stat-type TYPE      Stat type: stat_only or full_syst (default: stat_only)
-#   --data-type TYPE      Data type: asimov or obs (default: asimov)
-#   --poi POI             Scanned POI (default: cHWtil_combine)
-#   --base-dir DIR        Base directory for output (default: ../../output)
-#   --output-dir DIR      Output directory for plots (default: auto from base-dir)
-#   --all                 Run for all POIs
-#   --all-models          Run for both linear_only and quadratic models
+# Required:
+#   --input DIR           Input directory containing ROOT scan files (fit_<poi>_*.root)
+#   --poi POI             Scanned POI name (e.g., cHWtil_combine)
+#
+# Optional:
+#   --output FILE         Output filename (default: profile_<poi>.pdf)
+#   --output-dir DIR      Output directory (default: same as input/../plots)
+#   --title TITLE         Plot title (default: auto-generated)
+#   --data-type TYPE      Data type label: Data or Asimov (default: auto from path)
+#   --no-atlas            Disable ATLAS label
+#   --no-legend           Disable legend
+#   --no-errors           Disable uncertainty bands
 #   -h, --help            Show this help message
 #
 # Examples:
-#   ./plot_3poi_profile.sh --poi cHWtil_combine
-#   ./plot_3poi_profile.sh --all --model linear_only
-#   ./plot_3poi_profile.sh --all --all-models
+#   # Basic usage with explicit input
+#   ./plot_3poi_profile.sh --input /path/to/root_files --poi cHWtil_combine
+#
+#   # Custom output location
+#   ./plot_3poi_profile.sh --input /path/to/root_files --poi cHWtil_combine \
+#       --output my_plot.pdf --output-dir /path/to/plots
+#
+#   # With custom title
+#   ./plot_3poi_profile.sh --input /path/to/root_files --poi cHWtil_combine \
+#       --title "Linear EFT - cHWtil Scan (Asimov)"
 
 set -e
 
 # Get the directory where this script is located
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-# Default base directory is relative to the 3D_combination folder
-BASE_DIR="${SCRIPT_DIR}/../../output"
 
 # Default values
-NAME="linear_asimov"
-MODEL="linear_only"
-STAT_TYPE="stat_only"
-DATA_TYPE="asimov"
-POI="cHWtil_combine"
+INPUT_DIR=""
+POI=""
+OUTPUT_FILE=""
 OUTPUT_DIR=""
-RUN_ALL=false
-ALL_MODELS=false
+TITLE=""
+DATA_TYPE=""
+NO_ATLAS=""
+NO_LEGEND=""
+NO_ERRORS=""
 
 # Parse command line arguments
 while [[ $# -gt 0 ]]; do
     case $1 in
-        --name)
-            NAME="$2"
+        --input|-i)
+            INPUT_DIR="$2"
             shift 2
             ;;
-        --model)
-            MODEL="$2"
-            shift 2
-            ;;
-        --stat-type)
-            STAT_TYPE="$2"
-            shift 2
-            ;;
-        --data-type)
-            DATA_TYPE="$2"
-            shift 2
-            ;;
-        --poi)
+        --poi|-p)
             POI="$2"
             shift 2
             ;;
-        --base-dir)
-            BASE_DIR="$2"
+        --output|-o)
+            OUTPUT_FILE="$2"
             shift 2
             ;;
         --output-dir)
             OUTPUT_DIR="$2"
             shift 2
             ;;
-        --all)
-            RUN_ALL=true
+        --title|-t)
+            TITLE="$2"
+            shift 2
+            ;;
+        --data-type)
+            DATA_TYPE="$2"
+            shift 2
+            ;;
+        --no-atlas)
+            NO_ATLAS="--no-atlas"
             shift
             ;;
-        --all-models)
-            ALL_MODELS=true
+        --no-legend)
+            NO_LEGEND="--no-legend"
+            shift
+            ;;
+        --no-errors)
+            NO_ERRORS="--no-errors"
             shift
             ;;
         -h|--help)
-            head -25 "$0" | tail -24
+            head -35 "$0" | tail -34
             exit 0
             ;;
         *)
             echo "Unknown option: $1"
+            echo "Use --help for usage information"
             exit 1
             ;;
     esac
 done
 
-# Resolve BASE_DIR to absolute path
-BASE_DIR="$(cd "${BASE_DIR}" 2>/dev/null && pwd)" || {
-    echo "Error: Base directory not found: ${BASE_DIR}"
+# Validate required arguments
+if [[ -z "${INPUT_DIR}" ]]; then
+    echo "Error: --input is required"
+    echo "Use --help for usage information"
+    exit 1
+fi
+
+if [[ -z "${POI}" ]]; then
+    echo "Error: --poi is required"
+    echo "Use --help for usage information"
+    exit 1
+fi
+
+# Resolve INPUT_DIR to absolute path
+INPUT_DIR="$(cd "${INPUT_DIR}" 2>/dev/null && pwd)" || {
+    echo "Error: Input directory not found: ${INPUT_DIR}"
     exit 1
 }
 
-# Function to plot a single POI
-plot_single_poi() {
-    local model="$1"
-    local poi="$2"
-    
-    # Update name based on model
-    local name
-    if [[ "${model}" == "linear_only" ]]; then
-        name="linear_${DATA_TYPE}"
+# Auto-detect data type from path if not specified
+if [[ -z "${DATA_TYPE}" ]]; then
+    if [[ "${INPUT_DIR}" == *"/asimov/"* ]]; then
+        DATA_TYPE="Asimov"
+    elif [[ "${INPUT_DIR}" == *"/obs/"* ]]; then
+        DATA_TYPE="Data"
     else
-        name="quad_${DATA_TYPE}"
+        DATA_TYPE="Data"
     fi
-    
-    # Determine paths
-    local input_dir="${BASE_DIR}/3POI_1D_scans/${model}/${STAT_TYPE}/${DATA_TYPE}/root_${name}_${poi}_sequential"
-    local output_dir="${OUTPUT_DIR:-${BASE_DIR}/3POI_1D_scans/${model}/${STAT_TYPE}/${DATA_TYPE}/plots}"
-    
-    # Determine labels
-    local data_label
-    if [[ "${DATA_TYPE}" == "asimov" ]]; then
-        data_label="Asimov"
-    else
-        data_label="Data"
-    fi
-    
-    local model_label
-    if [[ "${model}" == "linear_only" ]]; then
-        model_label="Linear"
-    else
-        model_label="Quadratic"
-    fi
-    
-    # POI display name
-    local poi_label
-    case "${poi}" in
-        cHWtil_combine)
-            poi_label="cHWtil"
-            ;;
-        cHBtil_combine)
-            poi_label="cHBtil"
-            ;;
-        cHWBtil_combine)
-            poi_label="cHWBtil"
-            ;;
-        *)
-            poi_label="${poi}"
-            ;;
-    esac
-    
-    # Output file name
-    local output_file="profile_${name}_${poi}.pdf"
-    
-    echo "=============================================="
-    echo "3POI Profile Plot"
-    echo "=============================================="
-    echo "Name:      ${name}"
-    echo "Model:     ${model} (${model_label})"
-    echo "Stat type: ${STAT_TYPE}"
-    echo "Data type: ${DATA_TYPE} (${data_label})"
-    echo "POI:       ${poi} (${poi_label})"
-    echo ""
-    echo "Input:     ${input_dir}"
-    echo "Output:    ${output_dir}/${output_file}"
-    echo "=============================================="
-    
-    # Check if input directory exists
-    if [[ ! -d "${input_dir}" ]]; then
-        echo "Warning: Input directory not found: ${input_dir}"
-        echo "Skipping..."
-        echo ""
-        return 1
-    fi
-    
-    # Create output directory
-    mkdir -p "${output_dir}"
-    
-    # Run the plotting script
-    python3 "${SCRIPT_DIR}/plot_3poi_profile.py" \
-        --input "${input_dir}" \
-        --poi "${poi}" \
-        --output "${output_file}" \
-        --output-dir "${output_dir}" \
-        --data-type "${data_label}" \
-        --title "${model_label} EFT - ${poi_label} Scan (${data_label})"
-    
-    echo ""
-    echo "Done: ${output_dir}/${output_file}"
-    echo ""
-}
-
-# Define all POIs
-ALL_POIS=("cHWtil_combine" "cHBtil_combine" "cHWBtil_combine")
-
-# Define models to run
-if [[ "${ALL_MODELS}" == true ]]; then
-    MODELS=("linear_only" "quadratic")
-else
-    MODELS=("${MODEL}")
 fi
 
-# Run plotting
-if [[ "${RUN_ALL}" == true ]]; then
-    echo "Running for all POIs..."
-    for model in "${MODELS[@]}"; do
-        for poi in "${ALL_POIS[@]}"; do
-            plot_single_poi "${model}" "${poi}" || true
-        done
-    done
-else
-    plot_single_poi "${MODEL}" "${POI}"
+# Auto-detect model type from path for title
+MODEL_LABEL=""
+if [[ "${INPUT_DIR}" == *"linear_only"* ]]; then
+    MODEL_LABEL="Linear"
+elif [[ "${INPUT_DIR}" == *"linear_plus_quadratic"* ]] || [[ "${INPUT_DIR}" == *"quadratic"* ]]; then
+    MODEL_LABEL="Quadratic"
 fi
 
-echo "All done!"
+# POI display name
+POI_LABEL="${POI}"
+case "${POI}" in
+    cHWtil_combine)
+        POI_LABEL="cHWtil"
+        ;;
+    cHBtil_combine)
+        POI_LABEL="cHBtil"
+        ;;
+    cHWBtil_combine)
+        POI_LABEL="cHWBtil"
+        ;;
+esac
+
+# Default output directory: ../plots relative to input
+if [[ -z "${OUTPUT_DIR}" ]]; then
+    OUTPUT_DIR="$(dirname "${INPUT_DIR}")/plots"
+fi
+
+# Default output filename
+if [[ -z "${OUTPUT_FILE}" ]]; then
+    # Extract name from input directory (e.g., root_linear_asimov_cHWtil_combine_sequential -> linear_asimov)
+    DIR_NAME="$(basename "${INPUT_DIR}")"
+    # Remove root_ prefix and _<poi>_sequential/parallel suffix
+    NAME="${DIR_NAME#root_}"
+    NAME="${NAME%_${POI}_*}"
+    OUTPUT_FILE="profile_${NAME}_${POI}.pdf"
+fi
+
+# Default title
+if [[ -z "${TITLE}" ]]; then
+    if [[ -n "${MODEL_LABEL}" ]]; then
+        TITLE="${MODEL_LABEL} EFT - ${POI_LABEL} Scan (${DATA_TYPE})"
+    else
+        TITLE="${POI_LABEL} Scan (${DATA_TYPE})"
+    fi
+fi
+
+# Create output directory
+mkdir -p "${OUTPUT_DIR}"
+
+echo "=============================================="
+echo "3POI Profile Plot"
+echo "=============================================="
+echo "Input:     ${INPUT_DIR}"
+echo "POI:       ${POI} (${POI_LABEL})"
+echo "Data type: ${DATA_TYPE}"
+echo "Title:     ${TITLE}"
+echo "Output:    ${OUTPUT_DIR}/${OUTPUT_FILE}"
+echo "=============================================="
+
+# Build the command
+CMD="python3 ${SCRIPT_DIR}/plot_3poi_profile.py"
+CMD+=" --input ${INPUT_DIR}"
+CMD+=" --poi ${POI}"
+CMD+=" --output ${OUTPUT_FILE}"
+CMD+=" --output-dir ${OUTPUT_DIR}"
+CMD+=" --data-type ${DATA_TYPE}"
+CMD+=" --title \"${TITLE}\""
+[[ -n "${NO_ATLAS}" ]] && CMD+=" ${NO_ATLAS}"
+[[ -n "${NO_LEGEND}" ]] && CMD+=" ${NO_LEGEND}"
+[[ -n "${NO_ERRORS}" ]] && CMD+=" ${NO_ERRORS}"
+
+# Run the plotting script
+eval "${CMD}"
+
+echo ""
+echo "Done: ${OUTPUT_DIR}/${OUTPUT_FILE}"
