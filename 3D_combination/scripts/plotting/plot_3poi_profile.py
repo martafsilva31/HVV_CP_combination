@@ -133,7 +133,7 @@ def plot_3poi_profile(data, scanned_poi, floating_pois, output_file,
         output_file: output file path (PDF)
         show_atlas: show ATLAS label
         show_legend: show legend
-        show_errors: show uncertainty bands on floating POIs
+        show_errors: show error bars on floating POIs
         poi_labels: dict mapping POI names to display labels
         title: plot title (not used, kept for API compatibility)
         data_type: 'Data' or 'Asimov'
@@ -164,17 +164,14 @@ def plot_3poi_profile(data, scanned_poi, floating_pois, output_file,
     best_idx = find_best_fit(data)
     x_best = data['scanned_poi'][best_idx]
     
-    # --- Top panel: deltaNLL (same style as plot_scans) ---
-    ax_nll.plot(data['scanned_poi'], data['deltaNLL'], 'ko', markersize=4)
-    ax_nll.axhline(1, color='#348ABD', linestyle='--', linewidth=1, label=r'68% CL')
-    ax_nll.axhline(3.84, color='#E24A33', linestyle='--', linewidth=1, label=r'95% CL')
+    # --- Top panel: deltaNLL (matching plotscan.py style) ---
+    ax_nll.plot(data['scanned_poi'], data['deltaNLL'], 'k-', linewidth=1.5)
+    ax_nll.axhline(1, color='black', linestyle='--', linewidth=1)
+    ax_nll.axhline(3.84, color='black', linestyle='--', linewidth=1)
     
     ax_nll.set_ylabel(r'$-2\Delta\ln L$', fontsize=12)
     ax_nll.set_ylim(0, max(10, 1.2 * max(data['deltaNLL'])))
     ax_nll.tick_params(labelbottom=False)
-    
-    if show_legend:
-        ax_nll.legend(loc='upper right', fontsize=10)
     
     if show_atlas:
         ax_nll.text(0.05, 0.95, 'ATLAS', fontsize=14, fontweight='bold', 
@@ -182,25 +179,27 @@ def plot_3poi_profile(data, scanned_poi, floating_pois, output_file,
         ax_nll.text(0.18, 0.95, 'Internal', fontsize=12,
                    transform=ax_nll.transAxes, verticalalignment='top', style='italic')
     
-    # --- Bottom panel: Both floating POIs in same ratio plot ---
+    # --- Bottom panel: Both floating POIs in same ratio plot with error bars ---
     for i, (fp, label) in enumerate(zip(floating_pois, floating_labels)):
         color = colors[i % len(colors)]
         
-        # Plot points
-        ax_ratio.plot(data['scanned_poi'], data[fp], 'o', color=color, markersize=4, label=label)
+        # Calculate error bars (asymmetric)
+        yerr_up = data[f'{fp}_up']
+        yerr_down = -data[f'{fp}_down']  # _down is negative, need positive for errorbar
         
-        # Plot uncertainty band (optional)
         if show_errors:
-            y_up = data[fp] + data[f'{fp}_up']
-            y_down = data[fp] + data[f'{fp}_down']  # _down is already negative
-            ax_ratio.fill_between(data['scanned_poi'], y_down, y_up, alpha=0.2, color=color)
+            ax_ratio.errorbar(data['scanned_poi'], data[fp], yerr=[yerr_down, yerr_up],
+                            fmt='o', color=color, markersize=4, capsize=0, 
+                            elinewidth=1, label=label)
+        else:
+            ax_ratio.plot(data['scanned_poi'], data[fp], 'o', color=color, markersize=4, label=label)
     
     ax_ratio.set_ylabel('Profiled value', fontsize=11)
     ax_ratio.set_xlabel(scanned_label, fontsize=12)
     ax_ratio.axhline(0, color='gray', linestyle='-', alpha=0.5, linewidth=0.5)
     
     if show_legend:
-        ax_ratio.legend(loc='best', fontsize=10)
+        ax_ratio.legend(loc='best', fontsize=10, frameon=False)
     
     # Save figure
     fig.savefig(output_file, bbox_inches='tight', dpi=150)
