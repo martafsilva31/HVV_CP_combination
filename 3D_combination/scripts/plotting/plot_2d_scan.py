@@ -158,9 +158,9 @@ def create_histogram(poi1_vals: np.ndarray, poi2_vals: np.ndarray,
     # Create histogram
     h2 = ROOT.TH2D(name, "", n1, x_min, x_max, n2, y_min, y_max)
     
-    # Fill histogram
+    # Fill histogram (clamp deltaNLL to minimum of 0.001 to avoid white bins at exactly 0)
     for v1, v2, dnll in zip(poi1_vals, poi2_vals, delta_nll):
-        h2.Fill(v1, v2, dnll)
+        h2.Fill(v1, v2, max(dnll, 0.001))
     
     return h2
 
