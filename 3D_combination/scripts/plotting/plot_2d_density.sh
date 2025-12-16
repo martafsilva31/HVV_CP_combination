@@ -111,7 +111,16 @@ mkdir -p "$OUTPUT_DIR"
 
 # Generate output filename
 if [[ -z "$OUTPUT" ]]; then
+    # Auto-generate filename in output directory
     OUTPUT="${OUTPUT_DIR}/density_${POI1}_${POI2}.pdf"
+else
+    # If output is just a filename (no path), put it in OUTPUT_DIR
+    if [[ "$OUTPUT" != */* ]]; then
+        OUTPUT="${OUTPUT_DIR}/${OUTPUT}"
+    elif [[ "$OUTPUT" != /* ]]; then
+        # If output is a relative path, make it absolute from current dir
+        OUTPUT="$(pwd)/$OUTPUT"
+    fi
 fi
 
 # Build command
