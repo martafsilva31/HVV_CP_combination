@@ -22,6 +22,10 @@ OUTPUT=""
 Z_MAX="10"
 ATLAS_LABEL="Work in Progress"
 NO_DENSITY=""
+NO_LEGEND=""
+NO_ATLAS=""
+NO_CONTOURS=""
+NO_BESTFIT=""
 
 usage() {
     cat << EOF
@@ -43,11 +47,16 @@ Optional:
   --z-max <value>       Maximum deltaNLL for z-axis (default: 10)
   --atlas-label <text>  ATLAS label (default: Work in Progress)
   --no-density          Disable color density (contours only)
+  --no-legend           Disable legend
+  --no-atlas            Disable ATLAS label
+  --no-contours         Disable contour lines
+  --no-bestfit          Disable best-fit markers
   -h, --help            Show this help message
 
 Examples:
-  # Observed only
-  $(basename "$0") --poi1 cHWtil_combine --poi2 cHBtil_combine --obs linear_obs.txt
+  # Observed only (clean density, no overlays)
+  $(basename "$0") --poi1 cHWtil_combine --poi2 cHBtil_combine --obs linear_obs.txt \\
+                   --no-legend --no-atlas --no-contours --no-bestfit
 
   # Observed vs Expected overlay
   $(basename "$0") --poi1 cHWtil_combine --poi2 cHBtil_combine \\
@@ -68,6 +77,10 @@ while [[ $# -gt 0 ]]; do
         --z-max) Z_MAX="$2"; shift 2;;
         --atlas-label) ATLAS_LABEL="$2"; shift 2;;
         --no-density) NO_DENSITY="--no-density"; shift 1;;
+        --no-legend) NO_LEGEND="--no-legend"; shift 1;;
+        --no-atlas) NO_ATLAS="--no-atlas"; shift 1;;
+        --no-contours) NO_CONTOURS="--no-contours"; shift 1;;
+        --no-bestfit) NO_BESTFIT="--no-bestfit"; shift 1;;
         -h|--help) usage;;
         *) echo "Unknown option: $1"; usage;;
     esac
@@ -126,6 +139,23 @@ cmd+=(--atlas-label "$ATLAS_LABEL")
 if [[ -n "$NO_DENSITY" ]]; then
     cmd+=($NO_DENSITY)
 fi
+
+if [[ -n "$NO_LEGEND" ]]; then
+    cmd+=($NO_LEGEND)
+fi
+
+if [[ -n "$NO_ATLAS" ]]; then
+    cmd+=($NO_ATLAS)
+fi
+
+if [[ -n "$NO_CONTOURS" ]]; then
+    cmd+=($NO_CONTOURS)
+fi
+
+if [[ -n "$NO_BESTFIT" ]]; then
+    cmd+=($NO_BESTFIT)
+fi
+
 
 echo "=============================================="
 echo "2D Density Plot"

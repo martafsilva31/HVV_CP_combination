@@ -237,7 +237,11 @@ def plot_2d_scan(inputs: List[str], poi1: str, poi2: str,
                  from_root: bool = False, tree_name: str = 'nllscan',
                  show_density: bool = True, z_max: float = 10.0,
                  atlas_label: str = "Work in Progress",
-                 extra_text: str = "") -> bool:
+                 extra_text: str = "",
+                 show_legend: bool = True,
+                 show_atlas: bool = True,
+                 show_contours: bool = True,
+                 show_bestfit: bool = True) -> bool:
     """
     Create 2D likelihood scan plot.
     
@@ -249,10 +253,14 @@ def plot_2d_scan(inputs: List[str], poi1: str, poi2: str,
         labels: Labels for legend (one per input)
         from_root: If True, read directly from ROOT files
         tree_name: Name of TTree in ROOT files
-        show_density: If True, show color density for first input
+        show_density: If True, show color density (only for single input)
         z_max: Maximum deltaNLL for z-axis
         atlas_label: ATLAS label text
         extra_text: Additional text below ATLAS label
+        show_legend: If True, show legend with CL labels
+        show_atlas: If True, show ATLAS label
+        show_contours: If True, show 68% and 95% CL contours
+        show_bestfit: If True, show best-fit markers
     
     Returns:
         True if successful
@@ -266,6 +274,11 @@ def plot_2d_scan(inputs: List[str], poi1: str, poi2: str,
     # Default labels
     if labels is None:
         labels = [f"Input {i+1}" for i in range(len(inputs))]
+    
+    # Density only makes sense for single input
+    if len(inputs) > 1 and show_density:
+        print("Note: Multiple inputs - disabling density, showing contours only")
+        show_density = False
     
     # Read all inputs
     histograms = []
@@ -319,60 +332,65 @@ def plot_2d_scan(inputs: List[str], poi1: str, poi2: str,
         # Just set up the frame
         h2_main.Draw("AXIS")
     
-    # Draw all contours
-    for i, contours in enumerate(all_contours):
-        for cont in contours:
-            cont.Draw("L SAME")
+    # Draw all contours (optional)
+    if show_contours:
+        for i, contours in enumerate(all_contours):
+            for cont in contours:
+                cont.Draw("L SAME")
     
-    # Draw best-fit markers
+    # Draw best-fit markers (optional)
     markers = []
-    for i, (x, y) in enumerate(best_fit_points):
-        marker = ROOT.TMarker(x, y, 34)  # cross
-        marker.SetMarkerColor(COLORS[i % len(COLORS)])
-        marker.SetMarkerSize(1.5)
-        marker.Draw()
-        markers.append(marker)
+    if show_bestfit:
+        for i, (x, y) in enumerate(best_fit_points):
+            marker = ROOT.TMarker(x, y, 34)  # cross
+            marker.SetMarkerColor(COLORS[i % len(COLORS)])
+            marker.SetMarkerSize(1.5)
+            marker.Draw()
+            markers.append(marker)
     
     # Draw SM point at (0, 0)
     sm_marker = ROOT.TMarker(0, 0, 29)  # star
     sm_marker.SetMarkerColor(ROOT.kRed)
     sm_marker.SetMarkerSize(1.8)
-    sm_marker.Draw()
+    if show_legend:  # Only draw SM marker if legend is shown
+        sm_marker.Draw()
     
-    # Create legend
-    legend = ROOT.TLegend(0.55, 0.70, 0.88, 0.90)
-    legend.SetTextSize(0.035)
-    
-    for i, label in enumerate(labels):
-        # Create dummy graphs for legend
-        g_68 = ROOT.TGraph()
-        g_68.SetLineColor(COLORS[i % len(COLORS)])
-        g_68.SetLineStyle(2)
-        g_68.SetLineWidth(2)
-        legend.AddEntry(g_68, f"{label} 68% CL", "L")
+    # Create legend (optional)
+    if show_legend:
+        legend = ROOT.TLegend(0.55, 0.70, 0.88, 0.90)
+        legend.SetTextSize(0.035)
         
-        g_95 = ROOT.TGraph()
-        g_95.SetLineColor(COLORS[i % len(COLORS)])
-        g_95.SetLineStyle(1)
-        g_95.SetLineWidth(2)
-        legend.AddEntry(g_95, f"{label} 95% CL", "L")
+        for i, label in enumerate(labels):
+            # Create dummy graphs for legend
+            g_68 = ROOT.TGraph()
+            g_68.SetLineColor(COLORS[i % len(COLORS)])
+            g_68.SetLineStyle(2)
+            g_68.SetLineWidth(2)
+            legend.AddEntry(g_68, f"{label} 68% CL", "L")
+            
+            g_95 = ROOT.TGraph()
+            g_95.SetLineColor(COLORS[i % len(COLORS)])
+            g_95.SetLineStyle(1)
+            g_95.SetLineWidth(2)
+            legend.AddEntry(g_95, f"{label} 95% CL", "L")
+        
+        legend.AddEntry(sm_marker, "SM", "P")
+        legend.Draw()
     
-    legend.AddEntry(sm_marker, "SM", "P")
-    legend.Draw()
-    
-    # ATLAS label
-    latex = ROOT.TLatex()
-    latex.SetNDC()
-    latex.SetTextFont(72)
-    latex.SetTextSize(0.045)
-    latex.DrawLatex(0.18, 0.88, "ATLAS")
-    
-    latex.SetTextFont(42)
-    latex.DrawLatex(0.30, 0.88, atlas_label)
-    
-    if extra_text:
-        latex.SetTextSize(0.035)
-        latex.DrawLatex(0.18, 0.83, extra_text)
+    # ATLAS label (optional)
+    if show_atlas:
+        latex = ROOT.TLatex()
+        latex.SetNDC()
+        latex.SetTextFont(72)
+        latex.SetTextSize(0.045)
+        latex.DrawLatex(0.18, 0.88, "ATLAS")
+        
+        latex.SetTextFont(42)
+        latex.DrawLatex(0.30, 0.88, atlas_label)
+        
+        if extra_text:
+            latex.SetTextSize(0.035)
+            latex.DrawLatex(0.18, 0.83, extra_text)
     
     # Redraw axis on top
     ROOT.gPad.RedrawAxis()
@@ -423,6 +441,14 @@ Examples:
                         help='TTree name in ROOT files (default: nllscan)')
     parser.add_argument('--no-density', action='store_true',
                         help='Disable color density (contours only)')
+    parser.add_argument('--no-legend', action='store_true',
+                        help='Disable legend')
+    parser.add_argument('--no-atlas', action='store_true',
+                        help='Disable ATLAS label')
+    parser.add_argument('--no-contours', action='store_true',
+                        help='Disable contour lines')
+    parser.add_argument('--no-bestfit', action='store_true',
+                        help='Disable best-fit markers')
     parser.add_argument('--z-max', type=float, default=10.0,
                         help='Maximum deltaNLL for z-axis (default: 10)')
     parser.add_argument('--atlas-label', default='Work in Progress',
@@ -454,6 +480,10 @@ Examples:
         z_max=args.z_max,
         atlas_label=args.atlas_label,
         extra_text=args.extra_text,
+        show_legend=not args.no_legend,
+        show_atlas=not args.no_atlas,
+        show_contours=not args.no_contours,
+        show_bestfit=not args.no_bestfit,
     )
     
     sys.exit(0 if success else 1)
