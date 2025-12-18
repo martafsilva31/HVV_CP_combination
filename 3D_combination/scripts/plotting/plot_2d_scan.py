@@ -243,7 +243,7 @@ def draw_contours(h2: 'ROOT.TH2D', color: int, style: int = 1,
 def plot_2d_scan(inputs: List[str], poi1: str, poi2: str,
                  output: str, labels: Optional[List[str]] = None,
                  from_root: bool = False, tree_name: str = 'nllscan',
-                 show_density: bool = True, z_max: float = 10.0,
+                 show_density: bool = True, z_max: Optional[float] = None,
                  atlas_label: str = "Work in Progress",
                  extra_text: str = "",
                  show_legend: bool = True,
@@ -262,7 +262,7 @@ def plot_2d_scan(inputs: List[str], poi1: str, poi2: str,
         from_root: If True, read directly from ROOT files
         tree_name: Name of TTree in ROOT files
         show_density: If True, show color density (only for single input)
-        z_max: Maximum deltaNLL for z-axis
+        z_max: Maximum deltaNLL for z-axis (None for auto-scale)
         atlas_label: ATLAS label text
         extra_text: Additional text below ATLAS label
         show_legend: If True, show legend with CL labels
@@ -332,7 +332,8 @@ def plot_2d_scan(inputs: List[str], poi1: str, poi2: str,
     h2_main.GetXaxis().SetTitle(x_label)
     h2_main.GetYaxis().SetTitle(y_label)
     h2_main.GetZaxis().SetTitle("-2#Delta ln L")
-    h2_main.GetZaxis().SetRangeUser(0.001, z_max)
+    if z_max is not None:
+        h2_main.GetZaxis().SetRangeUser(0.001, z_max)
     
     if show_density:
         h2_main.Draw("COLZ")
@@ -457,8 +458,8 @@ Examples:
                         help='Disable contour lines')
     parser.add_argument('--no-bestfit', action='store_true',
                         help='Disable best-fit markers')
-    parser.add_argument('--z-max', type=float, default=10.0,
-                        help='Maximum deltaNLL for z-axis (default: 10)')
+    parser.add_argument('--z-max', type=float, default=None,
+                        help='Maximum deltaNLL for z-axis (default: auto)')
     parser.add_argument('--atlas-label', default='Work in Progress',
                         help='ATLAS label text')
     parser.add_argument('--extra-text', default='',
