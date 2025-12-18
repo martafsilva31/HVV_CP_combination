@@ -102,6 +102,7 @@ class AnalysisConfig:
         scan_ranges: Default scan ranges per POI
         quickfit_defaults: Default quickFit command options
         systematics: Dict of systematics configurations (stat_only, full_syst)
+        config_path: Path to the YAML file this config was loaded from (if any)
     """
     name: str
     scan_pois: List[str] = field(default_factory=list)
@@ -113,6 +114,7 @@ class AnalysisConfig:
     scan_ranges: Dict[str, Dict[str, float]] = field(default_factory=dict)
     quickfit_defaults: Dict[str, Any] = field(default_factory=dict)
     systematics: Dict[str, Dict[str, Any]] = field(default_factory=dict)
+    config_path: Optional[str] = None
     
     def __post_init__(self):
         """Set sensible defaults for quickfit options."""
@@ -178,7 +180,8 @@ class AnalysisConfig:
             workspaces=workspaces,
             scan_ranges=data.get('scan_ranges', {}),
             quickfit_defaults=data.get('quickfit_defaults', {}),
-            systematics=data.get('systematics', {})
+            systematics=data.get('systematics', {}),
+            config_path=os.path.abspath(filepath)
         )
     
     def to_yaml(self, filepath: str) -> None:

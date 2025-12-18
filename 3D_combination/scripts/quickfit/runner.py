@@ -122,7 +122,14 @@ class QuickFitRunner:
         self.quickfit_path = quickfit_path
         self.verbose = verbose
         self.poi_builder = POIBuilder(config)
-        self.result_parser = FitResultParser()
+        self._result_parser = None  # Lazy initialization - only created when needed
+    
+    @property
+    def result_parser(self):
+        """Lazy-load result parser (requires ROOT)."""
+        if self._result_parser is None:
+            self._result_parser = FitResultParser()
+        return self._result_parser
     
     def _log(self, msg: str):
         """Print message if verbose."""
@@ -468,7 +475,8 @@ class QuickFitRunner:
         tag: Optional[str] = None,
         queue: str = "medium",
         extra_args: Optional[List[str]] = None,
-        systematics: str = "full_syst"
+        systematics: str = "full_syst",
+        floating_poi_range: Optional[Tuple[float, float]] = None
     ) -> str:
         """Run a 2D likelihood scan.
         
@@ -485,6 +493,8 @@ class QuickFitRunner:
             queue: Condor queue.
             extra_args: Extra quickFit arguments.
             systematics: Systematics mode ("full_syst" or "stat_only").
+            floating_poi_range: Tuple (min, max) for the floating third POI.
+                               If None, defaults to (-3, 3).
         
         Returns:
             Path to output directory with ROOT files.
@@ -506,9 +516,9 @@ class QuickFitRunner:
         self._log(f"Output: {root_dir}")
         
         if backend == "local":
-            self._run_2d_scan_local(ws, poi1, values1, poi2, values2, root_dir, logs_dir, mode, extra_args, systematics)
+            self._run_2d_scan_local(ws, poi1, values1, poi2, values2, root_dir, logs_dir, mode, extra_args, systematics, floating_poi_range)
         elif backend == "condor":
-            self._run_2d_scan_condor(ws, poi1, values1, poi2, values2, root_dir, logs_dir, mode, tag, queue, extra_args, systematics)
+            self._run_2d_scan_condor(ws, poi1, values1, poi2, values2, root_dir, logs_dir, mode, tag, queue, extra_args, systematics, floating_poi_range)
         else:
             raise ValueError(f"Unknown backend: {backend}")
         
@@ -525,7 +535,8 @@ class QuickFitRunner:
         logs_dir: str,
         mode: str,
         extra_args: Optional[List[str]],
-        systematics: str = "full_syst"
+        systematics: str = "full_syst",
+        floating_poi_range: Optional[Tuple[float, float]] = None
     ):
         """Run 2D scan locally."""
         prev_results = {}
@@ -538,7 +549,7 @@ class QuickFitRunner:
                 self._log(f"  Point {count}/{total}: {poi1}={v1:.4f}, {poi2}={v2:.4f}")
                 
                 # Build POI string
-                poi_string = self.poi_builder.build_2d_scan(poi1, v1, poi2, v2, prev_results)
+                poi_string = self.poi_builder.build_2d_scan(poi1, v1, poi2, v2, prev_results, floating_poi_range=floating_poi_range)
                 
                 # Build command
                 output_file = os.path.join(root_dir, f"fit_{poi1}_{v1:.4f}__{poi2}_{v2:.4f}.root")
@@ -570,7 +581,8 @@ class QuickFitRunner:
         tag: str,
         queue: str,
         extra_args: Optional[List[str]],
-        systematics: str = "full_syst"
+        systematics: str = "full_syst",
+        floating_poi_range: Optional[Tuple[float, float]] = None
     ):
         """Submit 2D scan to Condor."""
         workdir = os.getcwd()
@@ -641,7 +653,7 @@ class QuickFitRunner:
                 wrapper_path = os.path.join(logs_dir, f"{job_tag}.sh")
                 output_file = os.path.join(root_dir, f"fit_{poi1}_{v1_str}__{poi2}_{v2_str}.root")
                 
-                poi_string = self.poi_builder.build_2d_scan(poi1, v1, poi2, v2)
+                poi_string = self.poi_builder.build_2d_scan(poi1, v1, poi2, v2, floating_poi_range=floating_poi_range)
                 cmd = self._build_command(ws, poi_string, output_file, extra_args, systematics=systematics)
                 
                 self._write_condor_wrapper(wrapper_path, [cmd.to_string()], workdir)
@@ -755,6 +767,8 @@ def main():
     parser.add_argument('--min2', type=float, help='Minimum value for poi2')
     parser.add_argument('--max2', type=float, help='Maximum value for poi2')
     parser.add_argument('--n-points2', type=int, default=25, help='Number of points for poi2')
+    parser.add_argument('--floating-poi-range', type=float, nargs=2, metavar=('MIN', 'MAX'),
+                       help='Range (min max) for the floating third POI in 2D scans. Default: -3 3')
     
     # Fit options
     parser.add_argument('--hesse', action='store_true', help='Run Hesse (for fit)')
@@ -790,6 +804,7 @@ def main():
         if not all([args.poi, args.poi2, args.min is not None, args.max is not None,
                    args.min2 is not None, args.max2 is not None]):
             parser.error("2D scan requires --poi, --poi2, --min, --max, --min2, --max2")
+        floating_range = tuple(args.floating_poi_range) if args.floating_poi_range else None
         runner.run_2d_scan(
             workspace=args.workspace,
             poi1=args.poi,
@@ -805,7 +820,8 @@ def main():
             output_dir=args.output_dir,
             tag=args.tag,
             queue=args.queue,
-            systematics=args.systematics
+            systematics=args.systematics,
+            floating_poi_range=floating_range
         )
     elif args.scan_type == 'fit':
         runner.run_fit(

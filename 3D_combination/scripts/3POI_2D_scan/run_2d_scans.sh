@@ -33,6 +33,7 @@ SYSTEMATICS="full_syst"
 OUTPUT_DIR="${SCRIPT_DIR}/../../output/2D_scans"
 TAG=""
 QUEUE="short"
+FLOATING_RANGE=""
 
 usage() {
     cat << EOF
@@ -55,6 +56,7 @@ Optional:
   --mode <mode>        parallel|sequential (default: parallel)
   --backend <backend>  local|condor (default: local)
   --systematics <sys>  full_syst|stat_only (default: full_syst)
+  --floating-poi-range <min> <max>  Range for the floating third POI (default: -3 3)
   --output-dir <dir>   Output directory
   --tag <tag>          Tag for output naming
   --queue <queue>      Condor queue (default: short)
@@ -87,6 +89,7 @@ while [[ $# -gt 0 ]]; do
         --mode) MODE="$2"; shift 2;;
         --backend) BACKEND="$2"; shift 2;;
         --systematics) SYSTEMATICS="$2"; shift 2;;
+        --floating-poi-range) FLOATING_RANGE="$2 $3"; shift 3;;
         --output-dir) OUTPUT_DIR="$2"; shift 2;;
         --tag) TAG="$2"; shift 2;;
         --queue) QUEUE="$2"; shift 2;;
@@ -130,24 +133,34 @@ echo "=============================================="
 echo
 
 cd "$SCRIPT_DIR/.."
-python3 -m quickfit.runner \
-    --config "$CONFIG" \
-    --scan-type 2d \
-    --workspace "$WORKSPACE" \
-    --poi "$POI1" \
-    --min "$MIN1" \
-    --max "$MAX1" \
-    --n-points "$N1" \
-    --poi2 "$POI2" \
-    --min2 "$MIN2" \
-    --max2 "$MAX2" \
-    --n-points2 "$N2" \
-    --mode "$MODE" \
-    --backend "$BACKEND" \
-    --systematics "$SYSTEMATICS" \
-    --output-dir "$OUTPUT_DIR" \
-    --tag "$TAG" \
+
+# Build the command
+CMD=(python3 -m quickfit.runner
+    --config "$CONFIG"
+    --scan-type 2d
+    --workspace "$WORKSPACE"
+    --poi "$POI1"
+    --min "$MIN1"
+    --max "$MAX1"
+    --n-points "$N1"
+    --poi2 "$POI2"
+    --min2 "$MIN2"
+    --max2 "$MAX2"
+    --n-points2 "$N2"
+    --mode "$MODE"
+    --backend "$BACKEND"
+    --systematics "$SYSTEMATICS"
+    --output-dir "$OUTPUT_DIR"
+    --tag "$TAG"
     --queue "$QUEUE"
+)
+
+# Add floating-poi-range if specified
+if [[ -n "$FLOATING_RANGE" ]]; then
+    CMD+=(--floating-poi-range $FLOATING_RANGE)
+fi
+
+"${CMD[@]}"
 
 echo
 echo "Done! Results in: $OUTPUT_DIR/root_${TAG}"

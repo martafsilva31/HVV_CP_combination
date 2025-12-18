@@ -131,36 +131,44 @@ def create_histogram(poi1_vals: np.ndarray, poi2_vals: np.ndarray,
     """
     Create 2D histogram from scan data.
     
-    Automatically determines binning from data.
+    Uses interpolation to fill a regular grid, handling sparse/irregular input data.
     """
-    # Get unique values to determine grid
-    poi1_unique = np.sort(np.unique(poi1_vals))
-    poi2_unique = np.sort(np.unique(poi2_vals))
+    from scipy.interpolate import griddata
     
-    n1 = len(poi1_unique)
-    n2 = len(poi2_unique)
+    # Determine range from data
+    x_min, x_max = poi1_vals.min(), poi1_vals.max()
+    y_min, y_max = poi2_vals.min(), poi2_vals.max()
     
-    # Calculate bin edges (extend by half bin width)
-    if n1 > 1:
-        dx = (poi1_unique[-1] - poi1_unique[0]) / (n1 - 1)
-        x_min = poi1_unique[0] - dx/2
-        x_max = poi1_unique[-1] + dx/2
-    else:
-        x_min, x_max = poi1_unique[0] - 0.5, poi1_unique[0] + 0.5
-        
-    if n2 > 1:
-        dy = (poi2_unique[-1] - poi2_unique[0]) / (n2 - 1)
-        y_min = poi2_unique[0] - dy/2
-        y_max = poi2_unique[-1] + dy/2
-    else:
-        y_min, y_max = poi2_unique[0] - 0.5, poi2_unique[0] + 0.5
+    # Create a fine regular grid (100x100 bins for smooth density)
+    n_bins = 100
+    x_edges = np.linspace(x_min, x_max, n_bins + 1)
+    y_edges = np.linspace(y_min, y_max, n_bins + 1)
     
-    # Create histogram
-    h2 = ROOT.TH2D(name, "", n1, x_min, x_max, n2, y_min, y_max)
+    # Grid centers for interpolation
+    x_centers = (x_edges[:-1] + x_edges[1:]) / 2
+    y_centers = (y_edges[:-1] + y_edges[1:]) / 2
+    xx, yy = np.meshgrid(x_centers, y_centers)
     
-    # Fill histogram (clamp deltaNLL to minimum of 0.001 to avoid white bins at exactly 0)
-    for v1, v2, dnll in zip(poi1_vals, poi2_vals, delta_nll):
-        h2.Fill(v1, v2, max(dnll, 0.001))
+    # Interpolate scattered data onto regular grid
+    # Use linear interpolation, with nearest-neighbor for extrapolation
+    points = np.column_stack((poi1_vals, poi2_vals))
+    zz = griddata(points, delta_nll, (xx, yy), method='linear')
+    
+    # Fill NaN values (outside convex hull) with nearest neighbor
+    mask = np.isnan(zz)
+    if mask.any():
+        zz_nearest = griddata(points, delta_nll, (xx, yy), method='nearest')
+        zz[mask] = zz_nearest[mask]
+    
+    # Create histogram with regular binning
+    h2 = ROOT.TH2D(name, "", n_bins, x_edges, n_bins, y_edges)
+    
+    # Fill histogram from interpolated grid
+    for i in range(n_bins):
+        for j in range(n_bins):
+            # TH2D bins are 1-indexed, and j is y-axis (rows in numpy)
+            val = max(zz[j, i], 0.001)  # Clamp to avoid white at exactly 0
+            h2.SetBinContent(i + 1, j + 1, val)
     
     return h2
 

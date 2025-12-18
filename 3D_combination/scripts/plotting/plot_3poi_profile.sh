@@ -10,24 +10,10 @@
 # Optional:
 #   --output FILE         Output filename (default: profile_<poi>.pdf)
 #   --output-dir DIR      Output directory (default: same as input/../plots)
-#   --title TITLE         Plot title (default: auto-generated)
-#   --data-type TYPE      Data type label: Data or Asimov (default: auto from path)
 #   --no-atlas            Disable ATLAS label
 #   --no-legend           Disable legend
 #   --no-errors           Disable uncertainty bands
 #   -h, --help            Show this help message
-#
-# Examples:
-#   # Basic usage with explicit input
-#   ./plot_3poi_profile.sh --input /path/to/root_files --poi cHWtil_combine
-#
-#   # Custom output location
-#   ./plot_3poi_profile.sh --input /path/to/root_files --poi cHWtil_combine \
-#       --output my_plot.pdf --output-dir /path/to/plots
-#
-#   # With custom title
-#   ./plot_3poi_profile.sh --input /path/to/root_files --poi cHWtil_combine \
-#       --title "Linear EFT - cHWtil Scan (Asimov)"
 
 set -e
 
@@ -39,8 +25,6 @@ INPUT_DIR=""
 POI=""
 OUTPUT_FILE=""
 OUTPUT_DIR=""
-TITLE=""
-DATA_TYPE=""
 NO_ATLAS=""
 NO_LEGEND=""
 NO_ERRORS=""
@@ -64,14 +48,6 @@ while [[ $# -gt 0 ]]; do
             OUTPUT_DIR="$2"
             shift 2
             ;;
-        --title|-t)
-            TITLE="$2"
-            shift 2
-            ;;
-        --data-type)
-            DATA_TYPE="$2"
-            shift 2
-            ;;
         --no-atlas)
             NO_ATLAS="--no-atlas"
             shift
@@ -85,7 +61,7 @@ while [[ $# -gt 0 ]]; do
             shift
             ;;
         -h|--help)
-            head -35 "$0" | tail -34
+            head -17 "$0" | tail -16
             exit 0
             ;;
         *)
@@ -116,22 +92,21 @@ INPUT_DIR="$(cd "${INPUT_DIR}" 2>/dev/null && pwd)" || {
 }
 
 # Auto-detect data type from path if not specified
-if [[ -z "${DATA_TYPE}" ]]; then
-    if [[ "${INPUT_DIR}" == *"/asimov/"* ]]; then
-        DATA_TYPE="Asimov"
-    elif [[ "${INPUT_DIR}" == *"/obs/"* ]]; then
-        DATA_TYPE="Data"
-    else
-        DATA_TYPE="Data"
-    fi
+if [[ "${INPUT_DIR}" == *"/asimov/"* ]]; then
+    DATA_TYPE="Asimov"
+elif [[ "${INPUT_DIR}" == *"/obs/"* ]]; then
+    DATA_TYPE="Data"
+else
+    DATA_TYPE="Data"
 fi
 
-# Auto-detect model type from path for title
-MODEL_LABEL=""
+# Auto-detect model type from path
 if [[ "${INPUT_DIR}" == *"linear_only"* ]]; then
     MODEL_LABEL="Linear"
 elif [[ "${INPUT_DIR}" == *"linear_plus_quadratic"* ]] || [[ "${INPUT_DIR}" == *"quadratic"* ]]; then
     MODEL_LABEL="Quadratic"
+else
+    MODEL_LABEL=""
 fi
 
 # POI display name
@@ -155,21 +130,12 @@ fi
 
 # Default output filename
 if [[ -z "${OUTPUT_FILE}" ]]; then
-    # Extract name from input directory (e.g., root_linear_asimov_cHWtil_combine_sequential -> linear_asimov)
-    DIR_NAME="$(basename "${INPUT_DIR}")"
-    # Remove root_ prefix and _<poi>_sequential/parallel suffix
-    NAME="${DIR_NAME#root_}"
-    NAME="${NAME%_${POI}_*}"
-    OUTPUT_FILE="profile_${NAME}_${POI}.pdf"
+    OUTPUT_FILE="profile_${POI}.pdf"
 fi
 
-# Default title
-if [[ -z "${TITLE}" ]]; then
-    if [[ -n "${MODEL_LABEL}" ]]; then
-        TITLE="${MODEL_LABEL} EFT - ${POI_LABEL} Scan (${DATA_TYPE})"
-    else
-        TITLE="${POI_LABEL} Scan (${DATA_TYPE})"
-    fi
+# Ensure .pdf extension
+if [[ "${OUTPUT_FILE}" != *.pdf ]]; then
+    OUTPUT_FILE="${OUTPUT_FILE}.pdf"
 fi
 
 # Create output directory
@@ -180,25 +146,19 @@ echo "3POI Profile Plot"
 echo "=============================================="
 echo "Input:     ${INPUT_DIR}"
 echo "POI:       ${POI} (${POI_LABEL})"
+echo "Model:     ${MODEL_LABEL:-Auto}"
 echo "Data type: ${DATA_TYPE}"
-echo "Title:     ${TITLE}"
 echo "Output:    ${OUTPUT_DIR}/${OUTPUT_FILE}"
 echo "=============================================="
 
-# Build the command
-CMD="python3 ${SCRIPT_DIR}/plot_3poi_profile.py"
-CMD+=" --input ${INPUT_DIR}"
-CMD+=" --poi ${POI}"
-CMD+=" --output ${OUTPUT_FILE}"
-CMD+=" --output-dir ${OUTPUT_DIR}"
-CMD+=" --data-type ${DATA_TYPE}"
-CMD+=" --title \"${TITLE}\""
-[[ -n "${NO_ATLAS}" ]] && CMD+=" ${NO_ATLAS}"
-[[ -n "${NO_LEGEND}" ]] && CMD+=" ${NO_LEGEND}"
-[[ -n "${NO_ERRORS}" ]] && CMD+=" ${NO_ERRORS}"
-
 # Run the plotting script
-eval "${CMD}"
+python3 "${SCRIPT_DIR}/plot_3poi_profile.py" \
+    --input "${INPUT_DIR}" \
+    --poi "${POI}" \
+    --output "${OUTPUT_FILE}" \
+    --output-dir "${OUTPUT_DIR}" \
+    --data-type "${DATA_TYPE}" \
+    ${NO_ATLAS} ${NO_LEGEND} ${NO_ERRORS}
 
 echo ""
 echo "Done: ${OUTPUT_DIR}/${OUTPUT_FILE}"

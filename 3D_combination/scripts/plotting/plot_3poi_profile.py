@@ -167,19 +167,21 @@ def plot_3poi_profile(data, scanned_poi, floating_pois, output_file,
     # --- Top panel: deltaNLL (matching plotscan.py style) ---
     # Points connected by line
     ax_nll.plot(data['scanned_poi'], data['deltaNLL'], 'ko-', markersize=3, linewidth=1)
-    ax_nll.axhline(1, color='black', linestyle='--', linewidth=1)
-    ax_nll.axhline(3.84, color='black', linestyle='--', linewidth=1)
+    ax_nll.axhline(1, color='gray', linestyle=':', linewidth=1)
+    ax_nll.axhline(3.84, color='gray', linestyle=':', linewidth=1)
     
-    ax_nll.set_ylabel(r'$-2\Delta\ln L$', fontsize=12)
-    ax_nll.set_ylim(0, max(10, 1.2 * max(data['deltaNLL'])))
+    ax_nll.set_ylabel(r'$-2\log(L/L_{\max})$', fontsize=12)
+    # Auto-scale y-axis based on data, with some padding
+    ymax_nll = max(data['deltaNLL'])
+    ax_nll.set_ylim(0, ymax_nll * 1.15)
     ax_nll.tick_params(labelbottom=False)
     
-    # ATLAS label in plotscan.py style
+    # ATLAS label in plotscan.py style (bold italic for ATLAS, italic for Internal)
     if show_atlas:
-        ax_nll.text(0.05, 0.95, 'ATLAS ', fontsize=16, fontweight='bold', 
+        ax_nll.text(0.05, 0.95, 'ATLAS', fontsize=14, fontweight='bold', 
                    transform=ax_nll.transAxes, verticalalignment='top',
-                   fontfamily='sans-serif')
-        ax_nll.text(0.19, 0.95, 'Internal', fontsize=14,
+                   style='italic', fontfamily='sans-serif')
+        ax_nll.text(0.18, 0.95, 'Internal', fontsize=14,
                    transform=ax_nll.transAxes, verticalalignment='top', 
                    style='italic', fontfamily='sans-serif')
     
@@ -201,6 +203,18 @@ def plot_3poi_profile(data, scanned_poi, floating_pois, output_file,
     ax_ratio.set_ylabel('Profiled value', fontsize=11)
     ax_ratio.set_xlabel(scanned_label, fontsize=12)
     ax_ratio.axhline(0, color='gray', linestyle='-', alpha=0.5, linewidth=0.5)
+    
+    # Auto-scale y-axis for profiled values
+    all_vals = []
+    all_errs = []
+    for fp in floating_pois:
+        all_vals.extend(data[fp])
+        all_errs.extend(data[f'{fp}_up'])
+        all_errs.extend(-data[f'{fp}_down'])
+    ymin_ratio = min(all_vals) - max(all_errs)
+    ymax_ratio = max(all_vals) + max(all_errs)
+    padding = (ymax_ratio - ymin_ratio) * 0.1
+    ax_ratio.set_ylim(ymin_ratio - padding, ymax_ratio + padding)
     
     if show_legend:
         ax_ratio.legend(loc='best', fontsize=10, frameon=False)

@@ -21,7 +21,8 @@ statistical analyses. It is designed with separation of concerns:
 scripts/
 ├── quickfit/                    # Core quickFit runner module
 │   ├── __init__.py
-│   └── runner.py               # QuickFitRunner class
+│   ├── runner.py               # QuickFitRunner class (3POI scans)
+│   └── variable_runner.py      # VariablePOIScanRunner (1POI/2POI/3POI)
 │
 ├── utils/                       # Utility modules
 │   ├── __init__.py
@@ -33,17 +34,22 @@ scripts/
 ├── configs/                     # Analysis configurations
 │   └── hvv_cp_combination.yaml # HVV CP specific settings
 │
-├── 3POI_1D_scan/               # 1D scan scripts
+├── 3POI_1D_scan/               # 1D scan scripts (all 3 POIs float)
 │   ├── run_1d_scans.sh         # Generic runner
 │   └── submit_1d_scans_hvv_cp.sh  # HVV CP batch submission
 │
 ├── 3POI_2D_scan/               # 2D scan scripts
 │   ├── run_2d_scans.sh         # Generic runner
-│   └── submit_2d_scans_hvv_cp.sh  # HVV CP batch submission
+│   ├── submit_2d_scans_hvv_cp.sh  # HVV CP batch submission
+│   └── submit_linear_statonly_wide_range.sh  # Wide-range 2D scans
 │
 ├── 3POI_fit/                   # 3POI fit scripts
 │   ├── run_fit.sh              # Generic runner
 │   └── submit_fits_hvv_cp.sh   # HVV CP batch submission
+│
+├── variable_poi_1D_scan/       # Variable floating POI 1D scans (NEW)
+│   ├── run_variable_1d_scan.sh     # Run 1POI/2POI/3POI scans
+│   └── submit_all_variable_scans.sh # Submit all configurations
 │
 ├── individual_channel_3POI_1D_scans/  # Channel-specific scans
 │   ├── run_channel_scans.sh
@@ -52,10 +58,14 @@ scripts/
 ├── plotting/                   # Plotting utilities
 │   ├── convert_scans.sh        # ROOT to text conversion
 │   ├── plot_scans.sh           # Scan plotting (wraps RooFitUtils)
+│   ├── plot_1poi_2poi_3poi_plotscan.sh  # 1POI/2POI/3POI comparison plots
+│   ├── plot_2d_scan.py         # 2D density plots
+│   ├── plot_2d_profiled_poi.py # 2D profiled floating POI plots
+│   ├── plot_3poi_profile.py    # 3POI profile likelihood plots
 │   ├── plot_correlation_matrix.py
 │   └── plot_fit_summary.py
 │
-└── common.sh                   # Legacy common functions
+└── archive/                    # Legacy/old scripts (not for production)
 ```
 
 ## Quick Start
@@ -146,6 +156,44 @@ python plotting/plot_fit_summary.py \
     --linear-obs fit_linear_obs.root \
     --linear-exp fit_linear_asimov.root \
     --output summary.pdf
+```
+
+### Variable POI 1D Scans (1POI/2POI/3POI)
+
+The `variable_poi_1D_scan/` directory provides scripts for running 1D scans with
+a configurable number of floating POIs. This is useful for comparing:
+
+- **1POI scan**: Only the scanned POI varies, others fixed at 0 (SM)
+- **2POI scan**: One additional POI floats alongside the scanned POI
+- **3POI scan**: All three POIs float (standard profiled likelihood)
+
+```bash
+# 1POI scan: only cHWtil varies, cHBtil and cHWBtil fixed at 0
+./variable_poi_1D_scan/run_variable_1d_scan.sh \
+    --workspace linear_asimov --poi cHWtil_combine \
+    --min -1 --max 1 --n 31 --float-pois "" \
+    --backend condor --split-scan
+
+# 2POI scan: cHWtil scanned, cHBtil floats, cHWBtil fixed at 0
+./variable_poi_1D_scan/run_variable_1d_scan.sh \
+    --workspace linear_asimov --poi cHWtil_combine \
+    --min -1 --max 1 --n 31 --float-pois "cHBtil_combine" \
+    --backend condor --split-scan
+
+# Submit ALL 1POI/2POI configurations for linear model
+./variable_poi_1D_scan/submit_all_variable_scans.sh --linear --asimov --stat-only
+```
+
+The `--split-scan` option runs sequential fits starting from 0 and going outward
+(0→max and 0→min), which improves convergence.
+
+### Comparing 1POI/2POI/3POI Results
+
+```bash
+# Generate comparison plots showing all configurations on same plot
+./plotting/plot_1poi_2poi_3poi_plotscan.sh linear asimov
+
+# Output: output/plots/combined_1poi_2poi_3poi_plotscan/linear/stat_only/asimov/
 ```
 
 ## Configuration

@@ -11,6 +11,6 @@ This module provides:
 from .config import AnalysisConfig
 from .poi_builder import POIBuilder
 from .fit_result_parser import FitResultParser
-from .converters import RootToTxtConverter
 
-__all__ = ['AnalysisConfig', 'POIBuilder', 'FitResultParser', 'RootToTxtConverter']
+__all__ = ['AnalysisConfig', 'POIBuilder', 'FitResultParser']
+

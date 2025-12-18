@@ -29,7 +29,7 @@ Example usage:
 import argparse
 import sys
 import os
-from typing import Dict, List, Optional, Any
+from typing import Dict, List, Optional, Any, Tuple
 
 # Handle both module and script execution
 try:
@@ -77,14 +77,15 @@ class POIBuilder:
         scan_poi: str,
         scan_value: float,
         previous_results: Optional[Dict[str, float]] = None,
-        fix_other_scan_pois: bool = False
+        fix_other_scan_pois: bool = False,
+        float_pois_list: Optional[List[str]] = None
     ) -> str:
         """Build POI string for a 1D scan point.
         
         Logic:
         - If scanning a combine POI (cHWtil_combine, etc.):
           - Fix individual channel Wilson coeffs at 1
-          - Float other combine POIs
+          - Float other combine POIs (or only those in float_pois_list)
         - If scanning an individual channel POI (cHWtil_HZZ, etc.):
           - Fix combine POIs at 1
           - Float other individual channel Wilson coeffs
@@ -94,6 +95,8 @@ class POIBuilder:
             scan_value: Fixed value for the scan POI at this point.
             previous_results: Dict of POI names to values from previous fit.
             fix_other_scan_pois: If True, fix other scan POIs at 0.
+            float_pois_list: Explicit list of other scan POIs to float.
+                            If None, float all others. If empty list, fix all at 0.
         
         Returns:
             Comma-separated POI string for quickFit -p argument.
@@ -108,12 +111,20 @@ class POIBuilder:
                 # The POI being scanned is fixed at scan_value
                 pois.append(f"{poi}={scan_value:.6f}")
             elif scanning_combine:
-                # Scanning a combine POI: float other combine POIs
-                if fix_other_scan_pois:
-                    pois.append(f"{poi}=0")
+                # Determine if this POI should float
+                if float_pois_list is not None:
+                    # Explicit list provided
+                    should_float = poi in float_pois_list
+                elif fix_other_scan_pois:
+                    should_float = False
                 else:
+                    should_float = True
+                
+                if should_float:
                     default = prev.get(poi, 0.0)
                     pois.append(f"{poi}={default:.6f}_-3_3")
+                else:
+                    pois.append(f"{poi}=0")
             else:
                 # Scanning an individual channel POI: fix combine POIs at 1
                 pois.append(f"{poi}=1")
@@ -154,7 +165,8 @@ class POIBuilder:
         scan_poi2: str,
         scan_value2: float,
         previous_results: Optional[Dict[str, float]] = None,
-        fix_other_scan_pois: bool = False
+        fix_other_scan_pois: bool = False,
+        floating_poi_range: Optional[Tuple[float, float]] = None
     ) -> str:
         """Build POI string for a 2D scan point.
         
@@ -172,6 +184,8 @@ class POIBuilder:
             scan_value2: Value for second scan POI.
             previous_results: Dict of POI names to values from previous fit.
             fix_other_scan_pois: If True, fix the third scan POI at 0.
+            floating_poi_range: Tuple (min, max) for the floating third POI.
+                               If None, defaults to (-3, 3).
         
         Returns:
             Comma-separated POI string for quickFit -p argument.
@@ -180,6 +194,7 @@ class POIBuilder:
         prev = previous_results or {}
         scan_set = {scan_poi1, scan_poi2}
         scanning_combine = self._is_combine_poi(scan_poi1) or self._is_combine_poi(scan_poi2)
+        float_min, float_max = floating_poi_range if floating_poi_range else (-3, 3)
         
         # Handle combine-level POIs
         for poi in self.scan_pois:
@@ -193,7 +208,7 @@ class POIBuilder:
                     pois.append(f"{poi}=0")
                 else:
                     default = prev.get(poi, 0.0)
-                    pois.append(f"{poi}={default:.6f}_-3_3")
+                    pois.append(f"{poi}={default:.6f}_{float_min}_{float_max}")
             else:
                 # Scanning individual POIs: fix combine POIs at 1
                 pois.append(f"{poi}=1")
@@ -258,6 +273,64 @@ class POIBuilder:
             pois.append(f"{poi}=1")
         
         # Float POIs
+        for name, poi_config in self.float_pois.items():
+            if name in self.scan_pois or name in self.individual_wilson_coeffs:
+                continue
+            default = prev.get(name, poi_config.default)
+            pois.append(poi_config.to_quickfit_str(default))
+        
+        # Fixed POIs
+        for name, value in self.fixed_pois.items():
+            pois.append(f"{name}={value}")
+        
+        return ",".join(pois)
+    
+    def build_variable_scan(
+        self,
+        scan_poi: str,
+        scan_value: float,
+        float_pois: List[str],
+        previous_results: Optional[Dict[str, float]] = None
+    ) -> str:
+        """Build POI string for a variable scan (1POI, 2POI, or 3POI).
+        
+        In this mode:
+        - The scan POI is fixed at scan_value
+        - Specified POIs in float_pois are allowed to float (seeded from previous_results)
+        - Other scan POIs are fixed at 0
+        - Individual channel coefficients are fixed at 1
+        - Float POIs (mu's etc) use previous_results or defaults
+        
+        Args:
+            scan_poi: POI being scanned (fixed).
+            scan_value: Fixed value for scan POI.
+            float_pois: List of other Wilson coefficients to float.
+            previous_results: Dict of POI names to values from previous fit.
+        
+        Returns:
+            Comma-separated POI string for quickFit -p argument.
+        """
+        pois = []
+        prev = previous_results or {}
+        
+        # Handle scan POIs
+        for poi in self.scan_pois:
+            if poi == scan_poi:
+                # Fixed at scan value
+                pois.append(f"{poi}={scan_value:.6f}")
+            elif poi in float_pois:
+                # Float with seeding from previous
+                default = prev.get(poi, 0.0)
+                pois.append(f"{poi}={default:.6f}_-3_3")
+            else:
+                # Fix at 0
+                pois.append(f"{poi}=0")
+        
+        # Fix individual channel Wilson coefficients at 1
+        for poi in self.individual_wilson_coeffs:
+            pois.append(f"{poi}=1")
+        
+        # Float POIs (mu's, etc) - seed from previous results
         for name, poi_config in self.float_pois.items():
             if name in self.scan_pois or name in self.individual_wilson_coeffs:
                 continue
@@ -335,12 +408,14 @@ def main():
         description="Build quickFit POI strings from configuration."
     )
     parser.add_argument('--config', required=True, help='Path to YAML config file')
-    parser.add_argument('--scan-type', choices=['1d', '2d', 'fit', 'channel'],
+    parser.add_argument('--scan-type', choices=['1d', '2d', 'fit', 'channel', 'variable'],
                        default='fit', help='Type of scan/fit')
-    parser.add_argument('--scan-par', help='POI to scan (for 1d/channel)')
-    parser.add_argument('--scan-val', type=float, help='Scan value (for 1d/channel)')
+    parser.add_argument('--scan-par', help='POI to scan (for 1d/channel/variable)')
+    parser.add_argument('--scan-val', type=float, help='Scan value (for 1d/channel/variable)')
     parser.add_argument('--scan-par2', help='Second POI (for 2d)')
     parser.add_argument('--scan-val2', type=float, help='Second scan value (for 2d)')
+    parser.add_argument('--float-pois', default='',
+                       help='Comma-separated list of POIs to float (for variable scan)')
     parser.add_argument('--previous', default='', 
                        help='Previous results as comma-sep key=val pairs')
     parser.add_argument('--channel', help='Channel suffix (for channel scan)')
@@ -362,6 +437,11 @@ def main():
                 except ValueError:
                     pass
     
+    # Parse float POIs list
+    float_pois_list = []
+    if args.float_pois:
+        float_pois_list = [p.strip() for p in args.float_pois.split(',') if p.strip()]
+    
     # Build POI string
     if args.scan_type == '1d':
         if not args.scan_par or args.scan_val is None:
@@ -374,6 +454,12 @@ def main():
         poi_str = builder.build_2d_scan(
             args.scan_par, args.scan_val, 
             args.scan_par2, args.scan_val2, prev
+        )
+    elif args.scan_type == 'variable':
+        if not args.scan_par or args.scan_val is None:
+            parser.error("variable scan requires --scan-par and --scan-val")
+        poi_str = builder.build_variable_scan(
+            args.scan_par, args.scan_val, float_pois_list, prev
         )
     elif args.scan_type == 'channel':
         if not args.scan_par or args.scan_val is None or not args.channel:
