@@ -13,6 +13,7 @@ OUTPUT_DIR="${SCRIPT_DIR}/../../output/individual_channel_scans"
 MODE="parallel"
 BACKEND="condor"
 QUEUE="medium"
+SYSTEMATICS="stat_only"  # Default to stat_only for channel scans
 DRY_RUN=false
 
 DO_LINEAR=true
@@ -54,6 +55,8 @@ Options:
   --mode <mode>     parallel|sequential (default: parallel)
   --backend <b>     condor|local (default: condor)
   --queue <q>       Condor queue (default: medium)
+  --stat-only       Use stat-only systematics (default)
+  --full-syst       Use full systematics
   --dry-run         Print commands without executing
   -h, --help        Show this help message
 
@@ -89,6 +92,8 @@ while [[ $# -gt 0 ]]; do
         --mode) MODE="$2"; shift 2;;
         --backend) BACKEND="$2"; shift 2;;
         --queue) QUEUE="$2"; shift 2;;
+        --stat-only) SYSTEMATICS="stat_only"; shift;;
+        --full-syst) SYSTEMATICS="full_syst"; shift;;
         --dry-run) DRY_RUN=true; shift;;
         -h|--help) usage;;
         *) echo "Unknown option: $1"; usage;;
@@ -112,12 +117,13 @@ fi
 echo "=============================================="
 echo "HVV CP Individual Channel Scan Submission"
 echo "=============================================="
-echo "  Mode:       $MODE"
-echo "  Backend:    $BACKEND"
-echo "  Queue:      $QUEUE"
-echo "  Workspaces: ${WORKSPACES[*]}"
-echo "  Channels:   ${CHANNELS[*]}"
-echo "  Dry run:    $DRY_RUN"
+echo "  Mode:        $MODE"
+echo "  Backend:     $BACKEND"
+echo "  Queue:       $QUEUE"
+echo "  Systematics: $SYSTEMATICS"
+echo "  Workspaces:  ${WORKSPACES[*]}"
+echo "  Channels:    ${CHANNELS[*]}"
+echo "  Dry run:     $DRY_RUN"
 echo "=============================================="
 echo
 
@@ -150,6 +156,7 @@ for ws in "${WORKSPACES[@]}"; do
                 --n "$npts"
                 --mode "$MODE"
                 --backend "$BACKEND"
+                --systematics "$SYSTEMATICS"
                 --output-dir "$OUTPUT_DIR"
                 --tag "$tag"
                 --queue "$QUEUE"

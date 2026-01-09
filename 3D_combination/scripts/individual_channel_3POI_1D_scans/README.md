@@ -25,15 +25,7 @@ This allows you to:
 
 ## Quick Start
 
-### 1. Test the Setup (Local, Quick)
-
-```bash
-./test_channel_scans.sh
-```
-
-This runs a quick local test with 5 points per scan to verify everything works.
-
-### 2. Run Production Scans (Condor)
+### 1. Run Production Scans (Condor, stat-only)
 
 ```bash
 # Submit all channels and all Wilson coefficients
@@ -44,9 +36,12 @@ This runs a quick local test with 5 points per scan to verify everything works.
 
 # Submit only specific POI
 ./submit_channel_scans_hvv_cp.sh --channel HWW --poi cHWtil_HWW
+
+# Use full systematics instead of stat-only
+./submit_channel_scans_hvv_cp.sh --all --full-syst
 ```
 
-### 3. Generate Combined Plots
+### 2. Generate Combined Plots
 
 After scans complete, create plots showing all channels together:
 
@@ -65,7 +60,6 @@ After scans complete, create plots showing all channels together:
 | `run_channel_scans.sh` | Run a single channel scan (1D likelihood) |
 | `submit_channel_scans_hvv_cp.sh` | Submit all channel scans to Condor |
 | `plot_all_channels.sh` | Plot all channels together per Wilson coefficient |
-| `test_channel_scans.sh` | Quick local test with small number of points |
 
 ## Workflow Details
 

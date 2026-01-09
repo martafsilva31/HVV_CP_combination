@@ -3,11 +3,11 @@
 ## Quick Start Commands
 
 ```bash
-# 1. Test locally (5 points, fast)
-./test_channel_scans.sh
-
-# 2. Submit all channel scans to Condor
+# 1. Submit all channel scans to Condor (stat-only, default)
 ./submit_channel_scans_hvv_cp.sh --all
+
+# 2. Monitor jobs
+condor_q | grep channel
 
 # 3. After scans complete, create combined plots
 ./plot_all_channels.sh linear obs
