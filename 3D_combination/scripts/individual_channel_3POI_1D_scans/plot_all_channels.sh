@@ -18,6 +18,14 @@
 #   - output/plots/individual_channels/scan_cHWBtil_all_channels.pdf
 # =============================================================================
 
+# Setup ATLAS environment if not already set
+if [ -z "${ATLAS_LOCAL_ROOT_BASE:-}" ]; then
+    export ATLAS_LOCAL_ROOT_BASE=/cvmfs/atlas.cern.ch/repo/ATLASLocalRootBase
+    source ${ATLAS_LOCAL_ROOT_BASE}/user/atlasLocalSetup.sh 2>&1 | head -5
+    lsetup "asetup StatAnalysis,0.3.1" 2>&1 | grep -v "^Configured" | head -5
+    source /project/atlas/users/mfernand/software/RooFitUtils/build/setup.sh
+fi
+
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -244,9 +252,8 @@ for wilson_type in cHWtil cHBtil cHWBtil; do
         $plotscan_inputs \
         -o "$output_tex" \
         --ymax 10 \
-        --xaxis "$label" \
-        --yaxis "\$-2\\Delta \\ln L\$" \
-        --show-legend
+        --labels "$label" "\$-2\\Delta \\ln L\$" \
+        --drawpoints
     
     # Compile to PDF
     output_pdf="${OUTPUT_DIR}/scan_${wilson_type}_all_channels_${MODEL}_${DATA_TYPE}.pdf"
