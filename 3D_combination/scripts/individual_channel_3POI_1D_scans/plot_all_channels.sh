@@ -103,9 +103,9 @@ WILSON_CHANNELS["cHWBtil"]="HZZ:cHWBtil_HZZ HWW:cHWBtil_HWW HTauTau:chbwtilde_HT
 
 # Labels for plot
 declare -A WILSON_LABELS
-WILSON_LABELS["cHWtil"]='\$c_{H\\tilde{W}}\$'
-WILSON_LABELS["cHBtil"]='\$c_{H\\tilde{B}}\$'
-WILSON_LABELS["cHWBtil"]='\$c_{H\\tilde{W}B}\$'
+WILSON_LABELS["cHWtil"]='\$c_{H\tilde{W}}\$'
+WILSON_LABELS["cHBtil"]='\$c_{H\tilde{B}}\$'
+WILSON_LABELS["cHWBtil"]='\$c_{H\tilde{W}B}\$'
 
 # Channel colors and styles
 declare -A CHANNEL_COLORS
