@@ -51,9 +51,10 @@ scripts/
 │   ├── run_variable_1d_scan.sh     # Run 1POI/2POI/3POI scans
 │   └── submit_all_variable_scans.sh # Submit all configurations
 │
-├── individual_channel_3POI_1D_scans/  # Channel-specific scans
-│   ├── run_channel_scans.sh
-│   └── submit_channel_scans_hvv_cp.sh
+├── individual_channel_3POI_1D_scans/  # Channel-specific Wilson coefficient scans
+│   ├── run_channel_scans.sh           # Run single channel scan
+│   ├── submit_channel_scans_hvv_cp.sh # Submit all channel scans
+│   └── plot_all_channels.sh           # Plot all channels together per Wilson coeff
 │
 ├── plotting/                   # Plotting utilities
 │   ├── convert_scans.sh        # ROOT to text conversion
@@ -200,6 +201,37 @@ The `--split-scan` option runs sequential fits starting from 0 and going outward
 
 # Output: output/plots/combined_1poi_2poi_3poi_plotscan/linear/stat_only/asimov/
 ```
+
+### Individual Channel Scans
+
+Scan channel-specific Wilson coefficients (e.g., `cHWtil_HZZ`, `cHWtil_HWW`) to 
+study individual channel sensitivities. The combine-level coefficients are fixed 
+at 1, and other channel coefficients float.
+
+```bash
+# Run single channel scan
+./individual_channel_3POI_1D_scans/run_channel_scans.sh \
+    --workspace linear_obs --channel HZZ --poi cHWtil_HZZ \
+    --min -5 --max 5 --n 31 --backend condor
+
+# Submit all channel scans
+./individual_channel_3POI_1D_scans/submit_channel_scans_hvv_cp.sh --all
+
+# Plot all channels together (one plot per Wilson coefficient type)
+./individual_channel_3POI_1D_scans/plot_all_channels.sh linear obs
+```
+
+**Available channels and POIs:**
+- **HZZ**: `cHWtil_HZZ`, `cHBtil_HZZ`, `cHWBtil_HZZ`
+- **HWW**: `cHWtil_HWW`, `cHBtil_HWW`, `cHWBtil_HWW`
+- **HTauTau**: `chwtilde_HTauTau`, `chbtilde_HTauTau`, `chbwtilde_HTauTau`
+- **Hbb**: `cHWtil_Hbb`
+
+The `plot_all_channels.sh` script creates combined plots showing all channels
+on the same plot for each Wilson coefficient type:
+- `scan_cHWtil_all_channels.pdf` - HZZ, HWW, HTauTau, Hbb
+- `scan_cHBtil_all_channels.pdf` - HZZ, HWW, HTauTau
+- `scan_cHWBtil_all_channels.pdf` - HZZ, HWW, HTauTau
 
 ## Configuration
 

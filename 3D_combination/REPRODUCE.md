@@ -194,18 +194,55 @@ cd scripts
 
 ## Step 6: Individual Channel Scans (Optional)
 
+Individual channel scans allow you to study the sensitivity of each decay channel
+(H→ZZ, H→WW, H→ττ, H→bb) to Wilson coefficients independently.
+
+### 6.1 Run Single Channel Scan
+
 ```bash
-# Scan individual channel Wilson coefficients
+# Scan HZZ channel cHWtil coefficient
+./individual_channel_3POI_1D_scans/run_channel_scans.sh \
+    --workspace linear_obs --channel HZZ --poi cHWtil_HZZ \
+    --min -5 --max 5 --n 31 --backend condor
+
+# Scan HWW channel cHBtil coefficient
+./individual_channel_3POI_1D_scans/run_channel_scans.sh \
+    --workspace linear_obs --channel HWW --poi cHBtil_HWW \
+    --min -5 --max 5 --n 31 --backend condor
+```
+
+### 6.2 Submit All Channel Scans
+
+```bash
+# Submit all channels and all Wilson coefficients
 ./individual_channel_3POI_1D_scans/submit_channel_scans_hvv_cp.sh --all
 
-# Or specific channel
-./individual_channel_3POI_1D_scans/run_channel_scans.sh \
-    --workspace linear_obs \
-    --poi cHWtil_HZZ \
-    --channel HZZ \
-    --min -2 --max 2 --n 21 \
-    --backend condor
+# Submit only HZZ channel
+./individual_channel_3POI_1D_scans/submit_channel_scans_hvv_cp.sh --channel HZZ
+
+# Submit single POI across all channels
+./individual_channel_3POI_1D_scans/submit_channel_scans_hvv_cp.sh --poi cHWtil_HZZ
 ```
+
+### 6.3 Plot All Channels Together
+
+After scans complete, create combined plots showing all channels for each 
+Wilson coefficient type:
+
+```bash
+# Plot all channels for linear observed data
+./individual_channel_3POI_1D_scans/plot_all_channels.sh linear obs
+
+# Plot all channels for quadratic Asimov
+./individual_channel_3POI_1D_scans/plot_all_channels.sh quad asimov
+```
+
+This creates:
+- `scan_cHWtil_all_channels_linear_obs.pdf` - All channels' cHWtil scans
+- `scan_cHBtil_all_channels_linear_obs.pdf` - All channels' cHBtil scans
+- `scan_cHWBtil_all_channels_linear_obs.pdf` - All channels' cHWBtil scans
+
+Output location: `output/plots/individual_channels/`
 
 ## Step 6b: Variable POI 1D Scans (1POI/2POI Comparisons)
 
