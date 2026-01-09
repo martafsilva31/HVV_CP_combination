@@ -1,0 +1,53 @@
+# =============================================================================
+# HVV CP 3D Combination - Git Ignore File
+# =============================================================================
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+.eggs/
+*.egg
+
+# ATLAS/ROOT environment
+.asetup.save
+*.d
+*.pcm
+*.rootmap
+
+# Condor job files (keep in output/*/logs_* for debugging)
+condor_*.sh
+condor_*.sub
+*.condor.log
+
+# Editor/IDE
+*.swp
+*.swo
+*~
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Build outputs (keep in output/ directory)
+*.aux
+*.log
+*.out
+*.bbl
+*.blg
+*.bcf
+*.fls
+*.fdb_latexmk
+*.synctex.gz
+*.run.xml
+
+# Large ROOT files should be tracked separately
+# Uncomment if you don't want to track workspace files:
+# combined_ws/*.root
+# modified_ws/**/*.root
+# output/**/*.root

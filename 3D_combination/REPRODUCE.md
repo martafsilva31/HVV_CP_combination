@@ -207,6 +207,47 @@ cd scripts
     --backend condor
 ```
 
+## Step 6b: Variable POI 1D Scans (1POI/2POI Comparisons)
+
+For comparing different numbers of floating POIs, use the variable POI scan scripts.
+These produce scans where you control exactly which POIs float vs stay fixed at 0:
+
+### Run 1POI scans (only scanned POI varies, others fixed at SM=0)
+
+```bash
+./variable_poi_1D_scan/run_variable_1d_scan.sh \
+    --workspace linear_asimov --poi cHWtil_combine \
+    --min -1 --max 1 --n 31 --float-pois "" \
+    --backend condor --split-scan
+```
+
+### Run 2POI scans (scanned POI + one other floats)
+
+```bash
+# cHWtil scanned, cHBtil floats, cHWBtil fixed at 0
+./variable_poi_1D_scan/run_variable_1d_scan.sh \
+    --workspace linear_asimov --poi cHWtil_combine \
+    --min -1 --max 1 --n 31 --float-pois "cHBtil_combine" \
+    --backend condor --split-scan
+```
+
+### Submit all 1POI/2POI configurations
+
+```bash
+# Submit all for linear Asimov
+./variable_poi_1D_scan/submit_all_variable_scans.sh --linear --asimov --stat-only
+
+# Submit all for both models
+./variable_poi_1D_scan/submit_all_variable_scans.sh --linear --quad --asimov --stat-only
+```
+
+### Generate 1POI/2POI/3POI comparison plots
+
+```bash
+./plotting/plot_1poi_2poi_3poi_plotscan.sh linear asimov
+./plotting/plot_1poi_2poi_3poi_plotscan.sh quad asimov
+```
+
 ## Step 7: Generate Plots
 
 ### 7.1 1D Scan Plots

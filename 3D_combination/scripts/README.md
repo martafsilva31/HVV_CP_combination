@@ -57,13 +57,18 @@ scripts/
 │
 ├── plotting/                   # Plotting utilities
 │   ├── convert_scans.sh        # ROOT to text conversion
-│   ├── plot_scans.sh           # Scan plotting (wraps RooFitUtils)
+│   ├── plot_scans.sh           # Scan plotting (wraps RooFitUtils plotscan.py)
 │   ├── plot_1poi_2poi_3poi_plotscan.sh  # 1POI/2POI/3POI comparison plots
-│   ├── plot_2d_scan.py         # 2D density plots
+│   ├── plot_2d_scan.py         # 2D density/contour plots (standalone)
+│   ├── plot_2d_density.sh      # Wrapper for plot_2d_scan.py
 │   ├── plot_2d_profiled_poi.py # 2D profiled floating POI plots
-│   ├── plot_3poi_profile.py    # 3POI profile likelihood plots
-│   ├── plot_correlation_matrix.py
-│   └── plot_fit_summary.py
+│   ├── plot_2d_profiled_poi.sh # Wrapper for above
+│   ├── plot_3poi_profile.py    # 3POI profile likelihood comparison plots
+│   ├── plot_3poi_profile.sh    # Wrapper for above
+│   ├── plot_correlation_matrix.py  # Correlation matrix from fit results
+│   ├── plot_fit_summary.py     # Summary plots with multiple workspaces
+│   ├── generate_2d_wide_range_plots.sh  # Generate all wide-range 2D plots
+│   └── rerun_linear_plots.sh   # Utility: regenerate linear 1POI/2POI/3POI plots
 │
 └── archive/                    # Legacy/old scripts (not for production)
 ```
