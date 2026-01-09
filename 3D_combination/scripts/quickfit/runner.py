@@ -223,6 +223,8 @@ class QuickFitRunner:
             f.write("# Setup ATLAS LCG environment\n")
             f.write("export ATLAS_LOCAL_ROOT_BASE=/cvmfs/atlas.cern.ch/repo/ATLASLocalRootBase\n")
             f.write("source ${ATLAS_LOCAL_ROOT_BASE}/user/atlasLocalSetup.sh\n")
+            f.write("asetup StatAnalysis,0.3.1\n")
+            f.write("ulimit -s unlimited\n")
             f.write("export PYTHONPATH=/cvmfs/atlas.cern.ch/repo/sw/software/0.3/lcg/rel1/Python/x86_64-el9-gcc13-opt/lib/python3.10/site-packages:${PYTHONPATH}\n\n")
             
             f.write(f"cd {workdir}\n\n")
