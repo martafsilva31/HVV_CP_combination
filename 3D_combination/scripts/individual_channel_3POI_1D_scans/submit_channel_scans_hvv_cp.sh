@@ -15,6 +15,7 @@ BACKEND="condor"
 QUEUE="medium"
 SYSTEMATICS="stat_only"  # Default to stat_only for channel scans
 DRY_RUN=false
+SPLIT_SCAN=false  # Split into 0→min and 0→max
 
 DO_LINEAR=true
 DO_QUAD=false  # Usually only run linear for channel scans
@@ -57,6 +58,7 @@ Options:
   --queue <q>       Condor queue (default: medium)
   --stat-only       Use stat-only systematics (default)
   --full-syst       Use full systematics
+  --split-scan      Split scan: submit 0→min and 0→max separately
   --dry-run         Print commands without executing
   -h, --help        Show this help message
 
@@ -94,6 +96,7 @@ while [[ $# -gt 0 ]]; do
         --queue) QUEUE="$2"; shift 2;;
         --stat-only) SYSTEMATICS="stat_only"; shift;;
         --full-syst) SYSTEMATICS="full_syst"; shift;;
+        --split-scan) SPLIT_SCAN=true; shift;;
         --dry-run) DRY_RUN=true; shift;;
         -h|--help) usage;;
         *) echo "Unknown option: $1"; usage;;
@@ -121,6 +124,7 @@ echo "  Mode:        $MODE"
 echo "  Backend:     $BACKEND"
 echo "  Queue:       $QUEUE"
 echo "  Systematics: $SYSTEMATICS"
+echo "  Split scan:  $SPLIT_SCAN"
 echo "  Workspaces:  ${WORKSPACES[*]}"
 echo "  Channels:    ${CHANNELS[*]}"
 echo "  Dry run:     $DRY_RUN"
@@ -141,33 +145,94 @@ for ws in "${WORKSPACES[@]}"; do
             min=${POI_MIN["default"]}
             max=${POI_MAX["default"]}
             npts=${POI_NPOINTS["default"]}
-            tag="${ws}_${channel}_${poi}_${MODE}"
             
-            echo ">>> Submitting: $ws / $channel / $poi"
-            echo "    Range: [$min, $max] with $npts points"
-            
-            cmd=(
-                "${SCRIPT_DIR}/run_channel_scans.sh"
-                --workspace "$ws"
-                --channel "$channel"
-                --poi "$poi"
-                --min "$min"
-                --max "$max"
-                --n "$npts"
-                --mode "$MODE"
-                --backend "$BACKEND"
-                --systematics "$SYSTEMATICS"
-                --output-dir "$OUTPUT_DIR"
-                --tag "$tag"
-                --queue "$QUEUE"
-            )
-            
-            if $DRY_RUN; then
-                echo "    [DRY RUN] ${cmd[*]}"
+            if $SPLIT_SCAN; then
+                # Split into 0→min and 0→max
+                # Negative side: min → 0
+                tag="${ws}_${channel}_${poi}_${MODE}_neg"
+                echo ">>> Submitting: $ws / $channel / $poi (NEGATIVE)"
+                echo "    Range: [$min, 0] with $((npts/2+1)) points"
+                
+                cmd=(
+                    "${SCRIPT_DIR}/run_channel_scans.sh"
+                    --workspace "$ws"
+                    --channel "$channel"
+                    --poi "$poi"
+                    --min "$min"
+                    --max 0
+                    --n "$((npts/2+1))"
+                    --mode "$MODE"
+                    --backend "$BACKEND"
+                    --systematics "$SYSTEMATICS"
+                    --output-dir "$OUTPUT_DIR"
+                    --tag "$tag"
+                    --queue "$QUEUE"
+                )
+                
+                if $DRY_RUN; then
+                    echo "    [DRY RUN] ${cmd[*]}"
+                else
+                    "${cmd[@]}"
+                fi
+                echo
+                
+                # Positive side: 0 → max
+                tag="${ws}_${channel}_${poi}_${MODE}_pos"
+                echo ">>> Submitting: $ws / $channel / $poi (POSITIVE)"
+                echo "    Range: [0, $max] with $((npts/2+1)) points"
+                
+                cmd=(
+                    "${SCRIPT_DIR}/run_channel_scans.sh"
+                    --workspace "$ws"
+                    --channel "$channel"
+                    --poi "$poi"
+                    --min 0
+                    --max "$max"
+                    --n "$((npts/2+1))"
+                    --mode "$MODE"
+                    --backend "$BACKEND"
+                    --systematics "$SYSTEMATICS"
+                    --output-dir "$OUTPUT_DIR"
+                    --tag "$tag"
+                    --queue "$QUEUE"
+                )
+                
+                if $DRY_RUN; then
+                    echo "    [DRY RUN] ${cmd[*]}"
+                else
+                    "${cmd[@]}"
+                fi
+                echo
             else
-                "${cmd[@]}"
+                # Normal full range scan
+                tag="${ws}_${channel}_${poi}_${MODE}"
+                
+                echo ">>> Submitting: $ws / $channel / $poi"
+                echo "    Range: [$min, $max] with $npts points"
+                
+                cmd=(
+                    "${SCRIPT_DIR}/run_channel_scans.sh"
+                    --workspace "$ws"
+                    --channel "$channel"
+                    --poi "$poi"
+                    --min "$min"
+                    --max "$max"
+                    --n "$npts"
+                    --mode "$MODE"
+                    --backend "$BACKEND"
+                    --systematics "$SYSTEMATICS"
+                    --output-dir "$OUTPUT_DIR"
+                    --tag "$tag"
+                    --queue "$QUEUE"
+                )
+                
+                if $DRY_RUN; then
+                    echo "    [DRY RUN] ${cmd[*]}"
+                else
+                    "${cmd[@]}"
+                fi
+                echo
             fi
-            echo
         done
     done
 done
