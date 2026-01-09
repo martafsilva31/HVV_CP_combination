@@ -18,13 +18,10 @@
 #   - output/plots/individual_channels/scan_cHWBtil_all_channels.pdf
 # =============================================================================
 
-# Setup ATLAS environment if not already set
-if [ -z "${ATLAS_LOCAL_ROOT_BASE:-}" ]; then
-    export ATLAS_LOCAL_ROOT_BASE=/cvmfs/atlas.cern.ch/repo/ATLASLocalRootBase
-    source ${ATLAS_LOCAL_ROOT_BASE}/user/atlasLocalSetup.sh 2>&1 | head -5
-    lsetup "asetup StatAnalysis,0.3.1" 2>&1 | grep -v "^Configured" | head -5
-    source /project/atlas/users/mfernand/software/RooFitUtils/build/setup.sh
-fi
+# Expect environment to be already set up manually:
+# setupATLAS
+# asetup StatAnalysis,0.3.1
+# source /project/atlas/users/mfernand/software/RooFitUtils/build/setup.sh
 
 set -euo pipefail
 
@@ -103,9 +100,9 @@ WILSON_CHANNELS["cHWBtil"]="HZZ:cHWBtil_HZZ HWW:cHWBtil_HWW HTauTau:chbwtilde_HT
 
 # Labels for plot
 declare -A WILSON_LABELS
-WILSON_LABELS["cHWtil"]='\$c_{H\tilde{W}}\$'
-WILSON_LABELS["cHBtil"]='\$c_{H\tilde{B}}\$'
-WILSON_LABELS["cHWBtil"]='\$c_{H\tilde{W}B}\$'
+WILSON_LABELS["cHWtil"]='$c_{H\tilde{W}}$'
+WILSON_LABELS["cHBtil"]='$c_{H\tilde{B}}$'
+WILSON_LABELS["cHWBtil"]='$c_{H\tilde{W}B}$'
 
 # Channel colors and styles
 declare -A CHANNEL_COLORS
@@ -122,7 +119,7 @@ CHANNEL_STYLES["Hbb"]="dashdot"
 
 # Function to convert ROOT files to txt format
 convert_root_to_txt() {
-    local input_dir=$1
+    local input_dirs=$1  # Can be multiple directories separated by space
     local poi=$2
     local output_txt=$3
     
@@ -133,15 +130,18 @@ import os
 
 ROOT.gROOT.SetBatch(True)
 
-input_dir = "${input_dir}"
+input_dirs = "${input_dirs}".split()
 poi = "${poi}"
 output_txt = "${output_txt}"
 
-pattern = os.path.join(input_dir, f'fit_{poi}_*.root')
-files = sorted(glob.glob(pattern))
+# Collect files from all input directories
+files = []
+for input_dir in input_dirs:
+    pattern = os.path.join(input_dir, f'fit_{poi}_*.root')
+    files.extend(sorted(glob.glob(pattern)))
 
 if not files:
-    print(f"WARNING: No ROOT files found: {pattern}")
+    print(f"WARNING: No ROOT files found in: {input_dirs}")
     exit(0)
 
 data_points = []
@@ -164,7 +164,7 @@ for fpath in files:
     f.Close()
 
 if not data_points:
-    print(f"WARNING: No valid data points extracted from {input_dir}")
+    print(f"WARNING: No valid data points extracted")
     exit(0)
 
 data_points.sort(key=lambda x: x[0])
@@ -204,18 +204,29 @@ for wilson_type in cHWtil cHBtil cHWBtil; do
     for channel_mapping in $channels_str; do
         IFS=':' read -r channel poi <<< "$channel_mapping"
         
-        # Find the scan directory
-        scan_tag="${MODEL}_${DATA_TYPE}_${channel}_${poi}_parallel"
-        root_dir="${INPUT_BASE}/root_${scan_tag}"
+        # Find the scan directory - try sequential_neg+pos first, then parallel
+        scan_tag_seq="${MODEL}_${DATA_TYPE}_${channel}_${poi}_sequential"
+        root_dir_neg="${INPUT_BASE}/root_${scan_tag_seq}_neg"
+        root_dir_pos="${INPUT_BASE}/root_${scan_tag_seq}_pos"
+        scan_tag_par="${MODEL}_${DATA_TYPE}_${channel}_${poi}_parallel"
+        root_dir_par="${INPUT_BASE}/root_${scan_tag_par}"
         
-        if [[ ! -d "$root_dir" ]]; then
-            echo "  WARNING: Directory not found: $root_dir"
-            echo "           Skipping $channel"
+        # Prefer combined sequential scans (neg+pos), fall back to parallel
+        if [[ -d "$root_dir_neg" ]] && [[ -d "$root_dir_pos" ]]; then
+            # Combine neg and pos scans
+            root_dir="${root_dir_neg} ${root_dir_pos}"
+            scan_mode="sequential_split"
+        elif [[ -d "$root_dir_par" ]]; then
+            root_dir="${root_dir_par}"
+            scan_mode="parallel"
+        else
+            echo "  WARNING: No scan directory found for $channel ($poi)"
+            echo "           Tried: $root_dir_neg, $root_dir_pos, $root_dir_par"
             continue
         fi
         
         # Check if ROOT files exist
-        nfiles=$(ls "$root_dir"/*.root 2>/dev/null | wc -l)
+        nfiles=$(ls $root_dir/*.root 2>/dev/null | wc -l)
         if [[ $nfiles -eq 0 ]]; then
             echo "  WARNING: No ROOT files in $root_dir"
             echo "           Skipping $channel"
@@ -252,8 +263,7 @@ for wilson_type in cHWtil cHBtil cHWBtil; do
         $plotscan_inputs \
         -o "$output_tex" \
         --ymax 10 \
-        --labels "$label" "\$-2\\Delta \\ln L\$" \
-        --drawpoints
+        --labels "$label" "\$-2\\Delta \\ln L\$"
     
     # Compile to PDF
     output_pdf="${OUTPUT_DIR}/scan_${wilson_type}_all_channels_${MODEL}_${DATA_TYPE}.pdf"
